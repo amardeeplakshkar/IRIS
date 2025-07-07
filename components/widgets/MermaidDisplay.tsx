@@ -201,7 +201,7 @@ export function MermaidSVGPreviewDangerous(props: {
 }
 
 export function SVGPreview(props: { xmlCode: string; className?: string; generating?: boolean, mermaidCode?: string }) {
-  let { xmlCode, className, generating, mermaidCode } = props
+  const { xmlCode, className, generating, mermaidCode } = props
   const { setPictureShow } = usePictureShow()
   
   const svgBase64 = useMemo(() => {
