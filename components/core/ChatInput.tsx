@@ -33,7 +33,7 @@ const TooltipProvider = TooltipPrimitive.Provider;
 const Tooltip = TooltipPrimitive.Root;
 const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
-  React.ElementRef<typeof TooltipPrimitive.Content>,
+  React.ComponentRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> & { showArrow?: boolean }
 >(({ className, sideOffset = 4, showArrow = false, ...props }, ref) => (
   <TooltipPrimitive.Portal>
@@ -56,7 +56,7 @@ TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 const Popover = PopoverPrimitive.Root;
 const PopoverTrigger = PopoverPrimitive.Trigger;
 const PopoverContent = React.forwardRef<
-  React.ElementRef<typeof PopoverPrimitive.Content>,
+  React.ComponentRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
   <PopoverPrimitive.Portal>
@@ -76,9 +76,8 @@ PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
 const Dialog = DialogPrimitive.Root;
 const DialogPortal = DialogPrimitive.Portal;
-const DialogTrigger = DialogPrimitive.Trigger;
 const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
+  React.ComponentRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
@@ -93,7 +92,7 @@ const DialogOverlay = React.forwardRef<
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
+  React.ComponentRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
@@ -156,6 +155,7 @@ interface EnhancedPromptBoxProps {
   maxFileSize?: number;
   acceptedFileTypes?: string[];
   onFilesChange?: (files: FileWithPreview[], pastedContent: PastedContent[]) => void;
+  variant?: "default" | "enhanced";
 }
 
 // Constants
@@ -206,17 +206,18 @@ const toolsList = [
   },
 ];
 
-// File type helpers
+
+// Helper function to get file icon based on type
 const getFileIcon = (type: string) => {
   if (type.startsWith("image/"))
-    return <ImageIcon className="h-5 w-5 text-zinc-400" />;
+    return <ImageIcon className="h-5 w-5 text-blue-400" />;
   if (type.startsWith("video/"))
-    return <Video className="h-5 w-5 text-zinc-400" />;
+    return <Video className="h-5 w-5 text-purple-400" />;
   if (type.startsWith("audio/"))
-    return <Music className="h-5 w-5 text-zinc-400" />;
-  if (type.includes("zip") || type.includes("rar") || type.includes("tar"))
-    return <Archive className="h-5 w-5 text-zinc-400" />;
-  return <FileText className="h-5 w-5 text-zinc-400" />;
+    return <Music className="h-5 w-5 text-green-400" />;
+  if (type.includes("zip") || type.includes("rar") || type.includes("tar") || type.includes("compressed"))
+    return <Archive className="h-5 w-5 text-orange-400" />;
+  return <FileText className="h-5 w-5 text-gray-400" />;
 };
 
 const formatFileSize = (bytes: number): string => {
@@ -285,47 +286,62 @@ const FilePreviewCard: React.FC<{
   }
 
   return (
-    <div className={cn(
-      "relative group bg-zinc-700 border w-fit border-zinc-600 rounded-lg shadow-md flex-shrink-0 overflow-hidden",
-      isImage ? "size-[125px] p-0" : "size-[125px] p-3"
-    )}>
-      <div className="flex items-start gap-3 size-[125px] overflow-hidden">
-        {isImage && file.preview ? (
-          <div className="relative size-full rounded-md overflow-hidden bg-zinc-600">
-            <img
-              src={file.preview}
-              alt={file.file.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-        ) : (
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-1.5 mb-1">
-              <div className="group absolute flex justify-start items-end p-2 inset-0 bg-gradient-to-b to-[#30302E] from-transparent overflow-hidden">
-                <p className="absolute bottom-2 left-2 capitalize text-white text-xs bg-zinc-800 border border-zinc-700 px-2 py-1 rounded-md">
-                  {file.type.split("/")[1]?.toUpperCase() || "FILE"}
-                </p>
-              </div>
-              {file.uploadStatus === "uploading" && (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />
-              )}
-              {file.uploadStatus === "error" && (
-                <AlertCircle className="h-3.5 w-3.5 text-red-400" />
-              )}
-            </div>
-            <p className="max-w-[90%] text-xs font-medium text-zinc-100 truncate" title={file.file.name}>
+    <div className="relative group bg-zinc-700 border border-zinc-600 rounded-lg shadow-md flex-shrink-0 overflow-hidden size-[125px]">
+      {isImage && file.preview ? (
+        // Image preview
+        <div className="relative size-full rounded-md overflow-hidden bg-zinc-600">
+          <img
+            src={file.preview}
+            alt={file.file.name}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/50" />
+          <div className="absolute bottom-2 left-2 right-2">
+            <p className="text-white text-xs font-medium truncate" title={file.file.name}>
               {file.file.name}
+            </p>
+            <p className="text-white/70 text-[10px]">
+              {formatFileSize(file.file.size)}
+            </p>
+          </div>
+        </div>
+      ) : (
+        // Non-image file preview
+        <div className="flex flex-col items-center justify-center p-3 h-full">
+          <div className="flex flex-col items-center justify-center flex-1">
+            {getFileIcon(file.type)}
+            <p className="text-xs font-medium text-zinc-100 mt-2 text-center truncate max-w-full" title={file.file.name}>
+              {file.file.name.length > 15 ? file.file.name.substring(0, 15) + "..." : file.file.name}
             </p>
             <p className="text-[10px] text-zinc-500 mt-1">
               {formatFileSize(file.file.size)}
             </p>
           </div>
-        )}
-      </div>
+          <div className="absolute bottom-2 right-2">
+            <p className="text-white text-[10px] bg-zinc-800 border border-zinc-700 px-1.5 py-0.5 rounded">
+              {getFileExtension(file.file.name)}
+            </p>
+          </div>
+        </div>
+      )}
+      
+      {/* Upload status indicators */}
+      {file.uploadStatus === "uploading" && (
+        <div className="absolute top-2 left-2">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+        </div>
+      )}
+      {file.uploadStatus === "error" && (
+        <div className="absolute top-2 left-2">
+          <AlertCircle className="h-4 w-4 text-red-400" />
+        </div>
+      )}
+      
+      {/* Remove button */}
       <Button
         size="icon"
         variant="outline"
-        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+        className="absolute top-1 right-1 h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
         onClick={() => onRemove(file.id)}
       >
         <X className="h-4 w-4" />
@@ -441,19 +457,20 @@ const PastedContentCard: React.FC<{
   );
 };
 
-export const EnhancedPromptBox = ({ 
-  value, 
-  handleInputChange, 
-  setValue, 
-  handleSubmit, 
-  setSelectedChatModel, 
+export const EnhancedPromptBox = ({
+  value,
+  handleInputChange,
+  setValue,
+  handleSubmit,
+  setSelectedChatModel,
   disabled = false,
   placeholder = "Message...",
   maxFiles = MAX_FILES,
   maxFileSize = MAX_FILE_SIZE,
-  acceptedFileTypes,
+  acceptedFileTypes = [],
   onFilesChange,
-  ...props 
+  variant = "enhanced",
+  ...props
 }: EnhancedPromptBoxProps) => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [pastedContent, setPastedContent] = useState<PastedContent[]>([]);
@@ -648,6 +665,115 @@ export const EnhancedPromptBox = ({
   const hasValue = value.trim().length > 0 || files.length > 0 || pastedContent.length > 0;
   const activeTool = selectedTool ? toolsList.find(t => t.id === selectedTool) : null;
 
+  // Default variant - simplified interface with file support
+  if (variant === "default") {
+    return (
+      <div className="relative w-full">
+        <form
+          onSubmit={(event: React.FormEvent) => {
+            event.preventDefault();
+            if (!value.trim() && files.length === 0) {
+              console.error("Please enter a message or add files");
+              return;
+            }
+            handleSubmit(event, {
+              experimental_attachments: files.map(f => f.file),
+              pastedContent,
+            });
+            setValue('');
+            
+            // Clear files and pasted content
+            files.forEach((file) => {
+              if (file.preview) URL.revokeObjectURL(file.preview);
+            });
+            setFiles([]);
+            setPastedContent([]);
+            
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+        >
+          <div className="flex flex-col rounded-[28px] p-2 m-2 shadow-sm transition-colors bg-background border">
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              accept="*/*"
+              multiple
+            />
+            
+            <textarea
+              ref={internalTextareaRef}
+              rows={1}
+              value={value}
+              onChange={handleInputChange}
+              onPaste={handlePaste}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="w-full resize-none border-0 bg-transparent p-3 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-300 focus:ring-0 focus-visible:outline-none min-h-12"
+              {...props}
+            />
+            
+            <div className="mt-0.5 p-1 pt-0">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                  disabled={disabled || files.length >= maxFiles}
+                >
+                  <Plus className="h-6 w-6" />
+                  <span className="sr-only">Attach files</span>
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={!value.trim() && files.length === 0}
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80 disabled:opacity-40 disabled:text-white"
+                >
+                  <Send className="h-6 w-6" />
+                  <span className="sr-only">Send message</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* File Preview for Default Variant */}
+          {files.length > 0 && (
+            <div className="overflow-x-auto border-t border-border mx-2 mt-0 p-3 bg-muted/50 rounded-b-[28px]">
+              <div className="flex gap-3">
+                {files.map((file) => (
+                  <div key={file.id} onClick={() => file.preview && handleImageClick(file.preview)}>
+                    <FilePreviewCard
+                      file={file}
+                      onRemove={removeFile}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </form>
+        
+        {/* Image Dialog for Default Variant */}
+        <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+          <DialogContent>
+            {selectedImagePreview && (
+              <img
+                src={selectedImagePreview}
+                alt="Full size preview"
+                className="w-full max-h-[95vh] object-contain rounded-[24px]"
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Enhanced variant - full featured interface
   return (
     <div
       className="relative w-full"
@@ -697,7 +823,7 @@ export const EnhancedPromptBox = ({
             ref={fileInputRef}
             onChange={handleFileChange}
             className="hidden"
-            accept={acceptedFileTypes?.join(",")}
+            accept={acceptedFileTypes?.join(",") || "*/*"}
             multiple
           />
 
@@ -887,3 +1013,25 @@ export const EnhancedPromptBox = ({
 };
 
 EnhancedPromptBox.displayName = "EnhancedPromptBox";
+
+// Default ChatInput component - simplified interface
+export interface ChatInputProps {
+  value: string;
+  setValue: (value: string) => void;
+  handleSubmit: (event?: { preventDefault?: (() => void) | undefined } | undefined, chatRequestOptions?: any) => void;
+  handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  setSelectedChatModel: (model: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+export const ChatInput = (props: ChatInputProps) => {
+  return (
+    <EnhancedPromptBox
+      {...props}
+      variant="default"
+    />
+  );
+};
+
+ChatInput.displayName = "ChatInput";

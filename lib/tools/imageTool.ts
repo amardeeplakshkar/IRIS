@@ -24,7 +24,7 @@ export const ImageTool = tool({
         const imageUrls = [];
 
         for (let i = 0; i < n; i++) {
-            const imageUrl = `https://iris.amardeep.space/api/image?prompt=${encodeURIComponent(prompt)}&seed=${Math.floor(Math.random() * 1000)}&width=${width}&height=${height}&model=dall-e-2`;
+            const imageUrl = `https://iris.amardeep.space/api/image?prompt=${encodeURIComponent(prompt)}&seed=${Math.floor(Math.random() * 1000)}&width=${width}&height=${height}&model=gpt-image-1`;
             imageUrls.push(imageUrl);
         }
 

@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useMemo } from 'react'
 import { PromptBox } from '@/components/ui/chatgpt-prompt-input'
 import { useChat } from '@ai-sdk/react'
-import ChatMessage from '@/components/core/ChatMessage'
+import ChatMessage, { ThinkingMessage } from '@/components/core/ChatMessage'
 import { EnhancedPromptBox } from '@/components/core/ChatInput'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AlertCircleIcon, CircleArrowOutUpRightIcon, Divide, RefreshCcw } from 'lucide-react'
@@ -22,6 +22,7 @@ const MainPage = () => {
     handleInputChange,
     isLoading,
     reload,
+    status,
     error,
     experimental_resume,
     
@@ -109,11 +110,14 @@ const MainPage = () => {
               ref={m.role === 'user' ? (el) => setUserMessageRef(el, m.id) : undefined}
               className={`mb-4 ${m.role === 'user' ? 'mt-4' : ''}`}
             >
-              <ChatMessage reload={reload} key={m.id} isToolCalling={isToolCalling} isLoading={isLoading} error={isError} msg={m} variant={m.role === 'user' ? 'sent' : 'received'} isUser={m.role === 'user'} messages={messages} />
+              <ChatMessage status={status} reload={reload} key={m.id} isToolCalling={isToolCalling} isLoading={isLoading} error={isError} msg={m} variant={m.role === 'user' ? 'sent' : 'received'} isUser={m.role === 'user'} messages={messages} />
               <br />
             </div>
           ))}
         </div>
+        {status === 'submitted' &&
+        messages.length > 0 &&
+        messages[messages.length - 1].role === 'user' && <ThinkingMessage />}
         {isError && error &&
           <div className='p-2'>
             <Alert variant={'destructive'}>
