@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button';
-import { PauseIcon, PlayIcon, RefreshCcw } from 'lucide-react';
+import { PauseIcon, PlayIcon, RefreshCcw, Volume2 } from 'lucide-react';
 import React from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import TooltipBox from '../helpers/TooltipBox';
@@ -27,12 +27,12 @@ const ChatAudio = ({ msg }: { msg: string }) => {
 
 
     const generateTTSForParagraph = async (paragraph: string): Promise<any> => {
-        const response = await fetch("http://localhost:3000/api/tts", {
+        const response = await fetch("/api/tts", {
             method: "POST",
             body: JSON.stringify({
                 line: paragraph,
                 voice: "alloy",
-                emotion: "friendly",
+                emotion: "friendly, informative and little fast",
                 use_random_seed: true,
                 specific_seed: 3,
             }),
@@ -230,7 +230,7 @@ const ChatAudio = ({ msg }: { msg: string }) => {
                                     <RefreshCcw className="h-4 w-4 animate-spin" />
                                 </>
                                 :
-                                <PlayIcon className="h-4 w-4" />
+                                <Volume2 className="h-4 w-4" />
                         }
                     </Button>
                 </TooltipBox>

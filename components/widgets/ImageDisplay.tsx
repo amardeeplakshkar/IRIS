@@ -78,7 +78,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ src, prompt }) => {
                 />
             </div>
             
-            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-200 flex gap-2">
+            <div className="absolute bottom-3 right-3 opacity-0 max-sm:opacity-100 group-hover:opacity-100 transition-all duration-200 flex gap-2">
                 <Button
                     onClick={toggleZoom}
                     size="icon"

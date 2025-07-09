@@ -37,29 +37,123 @@ const svgCodeToBase64 = (svgCode: string): string => {
   }
 };
 
-const svgToPngBase64 = async (svgBase64: string): Promise<string> => {
+export const svgToPngBase64 = async (svgBase64: string): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.src = svgBase64;
+    const img = document.createElement('img') as HTMLImageElement;
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
+        const scale =  10; // Use device pixel ratio or default to 2x for high quality
+        
+        // Set actual size in memory (scaled up for quality)
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        
+        // Scale back down using CSS for display
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('Could not get canvas context'));
           return;
         }
-        ctx.drawImage(img, 0, 0);
-        resolve(canvas.toDataURL('image/png'));
+        
+        // Scale the drawing context so everything draws at higher resolution
+        ctx.scale(scale, scale);
+        
+        // Enable image smoothing for better quality
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Draw the image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to PNG with high quality
+        resolve(canvas.toDataURL('image/png', 1.0));
       } catch (e) {
         reject(e);
       }
     };
-    img.onerror = (e: any) => {
-      reject(e);
+    img.onerror = (e: Event | string) => {
+      reject(new Error('Failed to load image'));
     };
+    img.src = svgBase64;
+  });
+};
+
+/**
+ * Converts SVG base64 data URL to PNG base64 data URL with configurable options
+ * @param svgBase64 - SVG data URL (data:image/svg+xml;base64,...)
+ * @param options - Configuration options for conversion
+ * @returns Promise<string> - PNG data URL (data:image/png;base64,...)
+ */
+export const convertSvgBase64ToPngBase64 = async (
+  svgBase64: string,
+  options: {
+    scale?: number;
+    quality?: number;
+    backgroundColor?: string;
+  } = {}
+): Promise<string> => {
+  const { scale = 2, quality = 1.0, backgroundColor } = options;
+
+  return new Promise((resolve, reject) => {
+    const img = document.createElement('img') as HTMLImageElement;
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        
+        // Get image dimensions
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        
+        // Set canvas size with scaling
+        canvas.width = width * scale;
+        canvas.height = height * scale;
+        
+        // Set display size
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        // Scale the drawing context
+        ctx.scale(scale, scale);
+        
+        // Enable high-quality image smoothing
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        
+        // Set background color if provided
+        if (backgroundColor) {
+          ctx.fillStyle = backgroundColor;
+          ctx.fillRect(0, 0, width, height);
+        }
+        
+        // Draw the image
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Convert to PNG with specified quality
+        const pngBase64 = canvas.toDataURL('image/png', quality);
+        resolve(pngBase64);
+      } catch (error) {
+        reject(error);
+      }
+    };
+    
+    img.onerror = () => {
+      reject(new Error('Failed to load SVG image'));
+    };
+    
     img.src = svgBase64;
   });
 };
@@ -107,7 +201,7 @@ const handleDownloadBase = async (src: string, prompt: string) => {
 
       const link = document.createElement('a')
       link.href = url
-      link.download = `iris-diagram.png`
+      link.download = `iris-diagram`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -212,8 +306,12 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
     return svgCodeToBase64(xmlCode)
   }, [xmlCode, generating])
   
-  if (!svgBase64) {
+  if (generating) {
     return <Loading />
+  }
+
+  if (!svgBase64) {
+    return <>Error</>
   }
   
   return (
@@ -221,7 +319,10 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
       className={cn('cursor-pointer size-full group relative', className)}
       onClick={async () => {
         
-        const pngBase64 = await svgToPngBase64(svgBase64)
+        const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
+          scale: 3, // Higher resolution for picture show
+          quality: 1.0
+        })
         setPictureShow({
           picture: { url: pngBase64 },
         })
@@ -235,7 +336,7 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
           aspectRatio="auto"
         />
         
-        <div className="absolute flex items-center gap-2 z-50 bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="absolute flex items-center gap-2 z-50 bottom-2 right-2  opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100">
           <Button
             variant="outline"
             size="sm"
@@ -243,7 +344,10 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
             onClick={(e) => {
               e.stopPropagation();
               const handleZoom = async () => {
-                const pngBase64 = await svgToPngBase64(svgBase64);
+                const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
+                  scale: 3, // Higher resolution for zoom
+                  quality: 1.0
+                });
                 setPictureShow({
                   picture: { url: pngBase64 },
                 });
@@ -272,7 +376,11 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
             onClick={(e) => {
               e.stopPropagation();
               const handleDownload = async () => {
-                handleDownloadBase(svgBase64, '');
+                const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
+                  scale: 4, // Higher resolution for downloads
+                  quality: 1.0
+                });
+                handleDownloadBase(pngBase64, '');
               };
               handleDownload();
             }}
