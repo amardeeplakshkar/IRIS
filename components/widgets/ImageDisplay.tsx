@@ -65,7 +65,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ src, prompt }) => {
                     src={src}
                     alt={'Generating Image...'}
                     className={cn(
-                        "max-w-md object-cover min-h-52 aspect-video grid place-items-center rounded-xl transition-all duration-300",
+                        "max-w-md object-contain max-h-96 w-full rounded-xl transition-all duration-300",
                         isZoomed ? "max-h-[90vh] max-w-[90vw] object-contain cursor-zoom-out" : "cursor-zoom-in",
                         "hover:brightness-105 transition-all"
                     )}
@@ -101,7 +101,7 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ src, prompt }) => {
     )
 
     return (
-        <div className="relative group w-full max-w-lg overflow-hidden">
+        <div className="relative group w-full overflow-hidden">
             <ImageGeneration>
                 {imageContent}
             </ImageGeneration>

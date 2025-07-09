@@ -11,9 +11,9 @@ export const ImageTool = tool({
         n: z
             .number()
             .min(1)
-            .max(10)
+            .max(4)
             .default(1)
-            .describe('Number of images to generate (1–10)'),
+            .describe('Number of images to generate (1–4)'),
         size: z
             .enum(['256x256', '512x512', '1024x1024'])
             .default('512x512')
@@ -24,7 +24,8 @@ export const ImageTool = tool({
         const imageUrls = [];
 
         for (let i = 0; i < n; i++) {
-            const imageUrl = `https://iris.amardeep.space/api/image?prompt=${encodeURIComponent(prompt)}&seed=${Math.floor(Math.random() * 1000)}&width=${width}&height=${height}&model=gpt-image-1`;
+            // const imageUrl = `https://iris.amardeep.space/api/image?prompt=${encodeURIComponent(prompt)}&seed=${Math.floor(Math.random() * 1000)}&width=${width}&height=${height}&model=gpt-image-1`;
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?nologo=true&seed=${Math.floor(Math.random() * 1000)}&width=${width}&height=${height}&model=flux`;
             imageUrls.push(imageUrl);
         }
 

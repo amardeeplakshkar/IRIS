@@ -65,11 +65,13 @@ export function ToolResult({
                         {
                             toolInvocation?.result?.imageUrls &&
                             toolInvocation?.result?.imageUrls.map((imageUrl: string, index: number) => (
+                                <div>
                                 <ImageDisplay
                                     key={index}
                                     src={imageUrl}
                                     prompt={toolInvocation?.result?.prompt}
-                                />
+                                    />
+                                    </div>
                             ))
                         }
                     </div>
@@ -106,7 +108,7 @@ export function ToolResult({
             )}
 
             {showResultText && (
-                <div className="flex mb-2 flex-row gap-2 items-center">
+                <div className="mb-2">
                     {getToolResult(toolName, toolInvocation)}
                 </div>
             )}

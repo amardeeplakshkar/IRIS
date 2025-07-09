@@ -1,11 +1,14 @@
 "use client"
 import React, { useRef, useEffect, useMemo } from 'react'
-import { PromptBox } from '@/components/ui/chatgpt-prompt-input'
 import { useChat } from '@ai-sdk/react'
 import ChatMessage, { ThinkingMessage } from '@/components/core/ChatMessage'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import { AlertCircleIcon, RefreshCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { FileWithPreview, PastedContent } from '@/types'
+import { Attachment } from 'ai'
+import { isTextualFile, readFileAsText } from '@/components/helpers'
+import { ChatInput } from '@/components/core/ChatInputSecond'
 
 const MainPage = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -15,16 +18,11 @@ const MainPage = () => {
   const [selectedChatModel, setSelectedChatModel] = React.useState('chat-model');
   const {
     messages,
-    input,
-    handleSubmit,
-    setInput,
-    handleInputChange,
     isLoading,
-    reload,
-    status,
     error,
-    experimental_resume,
-    
+    reload,
+    append,
+    status
   } = useChat({
     body: {
       selectedChatModel
@@ -50,21 +48,70 @@ const MainPage = () => {
       setIsToolCalling(false);
     }
   }, [isLoading, isToolCalling]);
-  // Custom function to handle scrolling based on message type
+  
+  const handleSendMessage = async (
+    message: string,
+    files: FileWithPreview[],
+    pastedContent: PastedContent[]
+  ) => {
+    
+    const attachments: Attachment[] = [];
+    
+    for (const fileWithPreview of files) {
+      const file = fileWithPreview.file;
+      
+      if (file.type.startsWith('image/')) {
+        
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+        
+        attachments.push({
+          name: file.name,
+          contentType: file.type,
+          url: base64
+        });
+      } else if (isTextualFile(file)) {
+        
+        const textContent = fileWithPreview.textContent || await readFileAsText(file);
+        
+        const base64 = `data:${file.type};base64,${btoa(unescape(encodeURIComponent(textContent)))}`;
+        
+        attachments.push({
+          name: file.name,
+          contentType: file.type,
+          url: base64
+        });
+      }
+    }
+
+    
+    let fullMessage = message;
+    if (pastedContent.length > 0) {
+      fullMessage += '\n\nPasted Content:\n' + pastedContent.map(p => p.content).join('\n\n');
+    }
+
+    await append({
+      role: 'user',
+      content: fullMessage,
+      experimental_attachments: attachments
+    });
+  };
+
   const scrollToMessage = () => {
     if (messages.length === 0) return;
-
-    // Get the last message
     const lastMessage = messages[messages.length - 1];
 
-    // If it's a user message, position it at the top with space
+    
     if (lastMessage.role === 'user') {
       const userMessageElement = userMessageRefs.current.get(lastMessage.id);
       if (userMessageElement && messagesContainerRef.current) {
-        // Calculate position to place user message at top with some padding
+        
         const containerTop = messagesContainerRef.current.getBoundingClientRect().top;
         const messageTop = userMessageElement.getBoundingClientRect().top;
-        const scrollOffset = messageTop - containerTop - 20; // 20px padding at top
+        const scrollOffset = messageTop - containerTop - 20; 
 
         messagesContainerRef.current.scrollBy({
           top: scrollOffset,
@@ -72,7 +119,7 @@ const MainPage = () => {
         });
       }
     } else {
-      // For assistant messages, just scroll to the bottom
+      
       if (messagesContainerRef.current) {
         messagesContainerRef.current.scrollTo({
           top: messagesContainerRef.current.scrollHeight,
@@ -87,12 +134,12 @@ const MainPage = () => {
     return messages[messages.length - 1].role === 'user';
   }, [messages]);
 
-  // Scroll when messages change
+  
   useEffect(() => {
     scrollToMessage();
   }, [messages]);
 
-  // Function to set ref for user messages
+  
   const setUserMessageRef = (element: HTMLDivElement | null, messageId: string) => {
     if (element) {
       userMessageRefs.current.set(messageId, element);
@@ -101,7 +148,7 @@ const MainPage = () => {
 
   return (
     <div className='flex relative flex-col h-[calc(100dvh-4rem)]'>
-      <div ref={messagesContainerRef} className='flex-1 overflow-y-auto mb-[7.5rem]'>
+      <div ref={messagesContainerRef} className='flex-1 overflow-y-auto pb-[7.5rem]'>
         <div className='p-4 w-full max-w-4xl mx-auto'>
           {messages?.map(m => (
             <div
@@ -118,13 +165,12 @@ const MainPage = () => {
         messages.length > 0 &&
         messages[messages.length - 1].role === 'user' && <ThinkingMessage />}
         {isError && error &&
-          <div className='p-2'>
+          <div className='p-4 mb-10 -mt-12'>
             <Alert variant={'destructive'}>
               <AlertCircleIcon />
               <AlertTitle>Oh no!</AlertTitle>
               <AlertDescription>
                 {isError}
-                {error && <>{JSON.stringify(error)}</>}
               </AlertDescription>
             </Alert>
               <Button className='mt-2' onClick={()=>{
@@ -137,13 +183,13 @@ const MainPage = () => {
         }
         {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className="" />}
       </div>
-      <div className='absolute bottom-0 left-0 right-0 md:bottom-2'>
-        <PromptBox
+      <div className='absolute bottom-0 left-0 right-0 md:bottom-2 p-2 shadow-2xl drop-shadow-2xl  drop-shadow-background'>
+        <ChatInput
           setSelectedChatModel={setSelectedChatModel}
-          value={input}
-          setValue={setInput}
-          handleSubmit={handleSubmit}
-          handleInputChange={handleInputChange}
+          onSendMessage={handleSendMessage}
+          maxFiles={10}
+          maxFileSize={10 * 1024 * 1024}
+          disabled={isLoading}
         />
       </div>
     </div>

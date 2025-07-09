@@ -18,68 +18,58 @@ export async function POST(request: Request) {
     const { messages, selectedChatModel } =
       await request.json();
 
-    // Check if there are any non-image attachments
-    let hasNonImageAttachments = false;
-    for (const message of messages) {
-      if (message.experimental_attachments) {
-        for (const attachment of message.experimental_attachments) {
-          if (!attachment.contentType?.startsWith('image/')) {
-            hasNonImageAttachments = true;
-            break;
+      let hasNonImageAttachments = false;
+      for (const message of messages) {
+        if (message.experimental_attachments) {
+          for (const attachment of message.experimental_attachments) {
+            if (!attachment.contentType?.startsWith('image/')) {
+              hasNonImageAttachments = true;
+              break;
+            }
           }
+          if (hasNonImageAttachments) break;
         }
-        if (hasNonImageAttachments) break;
       }
-    }
 
-    const processedMessages = await Promise.all(messages.map(async (message: any) => {
+    // Process messages to handle attachments
+    const processedMessages = messages.map((message: any) => {
       if (message.experimental_attachments) {
-        const attachmentDescriptions = await Promise.all(message.experimental_attachments.map(async (attachment: any) => {
+        // Convert attachments to a format the AI can understand
+        const attachmentDescriptions = message.experimental_attachments.map((attachment: any) => {
           if (attachment.contentType?.startsWith('image/')) {
             return `[Image: ${attachment.name}]`;
           } else if (attachment.contentType?.startsWith('text/') ||
                      attachment.contentType?.includes('javascript') ||
                      attachment.contentType?.includes('json') ||
                      attachment.contentType === 'application/pdf' ||
-                     attachment.name?.match(/\.(txt|md|py|js|ts|jsx|tsx|html|css|scss|yaml|yml|json|xml|pdf)$/i)) {
+                     attachment.name?.match(/\.(txt|md|py|js|ts|jsx|tsx|html|css|scss|yaml|yml|json|xml)$/i)) {
+            // For text files, decode and include content
             try {
-              let textContent: string;
-              
-              if (attachment.url.startsWith('blob:')) {
-                const response = await fetch(attachment.url);
-                textContent = await response.text();
-              } else if (attachment.url.startsWith('data:')) {
-                const base64Data = attachment.url.split(',')[1];
-                textContent = atob(base64Data);
-              } else {
-                throw new Error('Unsupported URL format');
-              }
-              
+              const base64Data = attachment.url.split(',')[1];
+              const textContent = atob(base64Data);
               return `[File: ${attachment.name}]\n\`\`\`\n${textContent}\n\`\`\``;
             } catch (e) {
               return `[File: ${attachment.name}] (content could not be read)`;
             }
           }
           return `[File: ${attachment.name}] (${attachment.contentType})`;
-        }));
-        
-        const attachmentDescriptionsText = attachmentDescriptions.join('\n\n');
+        }).join('\n\n');
 
         return {
           ...message,
-          content: message.content + (attachmentDescriptionsText ? '\n\n' + attachmentDescriptionsText : ''),
+          content: message.content + (attachmentDescriptions ? '\n\n' + attachmentDescriptions : ''),
           experimental_attachments: message.experimental_attachments
         };
       }
       return message;
-    }));
+    });
 
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText({
-          model: hasNonImageAttachments
-            ? openrouter('google/gemma-3-27b-it:free')
-            : myProvider.languageModel(selectedChatModel),
+          model:  hasNonImageAttachments
+          ? openrouter('google/gemma-3-27b-it:free')
+          : myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel }),
           messages: processedMessages,
           maxSteps: 5,

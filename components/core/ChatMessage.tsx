@@ -1,6 +1,6 @@
 import { cn, copyToClipboard } from '@/lib/utils';
 import { Message } from 'ai';
-import React from 'react'
+import React, { useState } from 'react'
 import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { MessageReasoning } from './MessageReasoning';
 import Image from 'next/image';
@@ -13,6 +13,8 @@ import { Button } from '../ui/button';
 import { cx } from 'class-variance-authority';
 import { motion } from 'framer-motion';
 import { TextShimmerWave } from '../ui/text-shimmer-wave';
+import ChatAudio from './ChatAudio';
+import TooltipBox from '../helpers/TooltipBox';
 
 const ChatMessage = ({
     msg,
@@ -35,6 +37,7 @@ const ChatMessage = ({
     status: string
 }) => {
     const isLastMessage = msg.id === messages[messages.length - 1].id;
+    const [mode, setMode] = useState("view");
     return (
         <div className={cn(
             "flex w-full animate-fade-in",
@@ -95,7 +98,7 @@ const ChatMessage = ({
                             {msg.parts?.map((part, i) => {
                                 switch (part.type) {
                                     case 'text':
-                                        return (
+                                            return (
                                             <div key={i}>
                                                 {
                                                     msg.id !== messages[messages.length - 1].id ? (
@@ -114,7 +117,7 @@ const ChatMessage = ({
                                                     )
                                                 }
                                             </div>
-                                        );
+                                        )
                                     case 'reasoning':
                                         return (
                                             <div key={i}>
@@ -155,13 +158,17 @@ const ChatMessage = ({
                             {
                                 !isLoading && !error && !isUser &&
                                 <div className='flex items-center gap-2 mt-2'>
+                                    <TooltipBox content="Copy Message">
                                     <Button
                                         size={'sm'}
                                         variant={'outline'}
                                         onClick={() => copyToClipboard(msg.content)}
-                                    >
+                                        >
                                         <Copy className='h-4 w-4' />
                                     </Button>
+                                        </TooltipBox>
+                                    <ChatAudio msg={msg.content}/>
+                                    <TooltipBox content="Reload Message">
                                     {isLastMessage && <Button
                                         size={'sm'}
                                         variant={'outline'}
@@ -169,6 +176,7 @@ const ChatMessage = ({
                                     >
                                         <RefreshCcw className='h-4 w-4' />
                                     </Button>}
+                                    </TooltipBox>
                                 </div>
                             }
                         </div>

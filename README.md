@@ -151,6 +151,10 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Mermaid.js](https://mermaid-js.github.io/mermaid/) - For diagram rendering
 - [shadcn/ui](https://ui.shadcn.com/) - For UI components
 
+## 🌟 Special Thanks
+
+- [Pollinations](https://github.com/pollinations) - For providing AI API services
+
 ---
 
 <div align="center">
