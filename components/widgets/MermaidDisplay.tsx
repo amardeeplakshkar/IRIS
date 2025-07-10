@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo, createContext, useContext } from 'react'
 import mermaid from 'mermaid'
-import { ChartBarStacked, Copy, ZoomIn, Download, Loader2 } from 'lucide-react'
+import React from 'react'
+import { Copy, ZoomIn, Download, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import Image from '@/lib/ui/image'
+import toImg from 'react-svg-to-image'
 
 
 type PictureShowContextType = {
@@ -19,6 +21,37 @@ type PictureShowContextType = {
 const PictureShowContext = createContext<PictureShowContextType>({
   setPictureShow: () => {},
 });
+
+
+export const cleanupMermaidErrorNodes = () => {
+  const errorSelectors = [
+    '[id^="mermaidError"]',
+    '.mermaidTooltip',
+    '[class*="mermaid-error"]',
+    '[id*="mermaid-error"]',
+    'div[style*="color: rgb(255, 0, 0)"]', 
+    'div[style*="color:#ff0000"]', 
+  ];
+  
+  errorSelectors.forEach(selector => {
+    const elements = document.querySelectorAll(selector);
+    elements.forEach(element => {
+      if (element.textContent?.includes('Syntax error') ||
+          element.textContent?.includes('mermaid version')) {
+        element.remove();
+      }
+    });
+  });
+  
+  
+  const allDivs = document.querySelectorAll('div');
+  allDivs.forEach(div => {
+    if (div.textContent?.includes('Syntax error in text') &&
+        div.textContent?.includes('mermaid version')) {
+      div.remove();
+    }
+  });
+};
 
 
 const svgCodeToBase64 = (svgCode: string): string => {
@@ -37,125 +70,62 @@ const svgCodeToBase64 = (svgCode: string): string => {
   }
 };
 
-export const svgToPngBase64 = async (svgBase64: string): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const img = document.createElement('img') as HTMLImageElement;
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        const scale =  10; // Use device pixel ratio or default to 2x for high quality
-        
-        // Set actual size in memory (scaled up for quality)
-        const width = img.naturalWidth || img.width;
-        const height = img.naturalHeight || img.height;
-        
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        
-        // Scale back down using CSS for display
-        canvas.style.width = width + 'px';
-        canvas.style.height = height + 'px';
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Could not get canvas context'));
-          return;
-        }
-        
-        // Scale the drawing context so everything draws at higher resolution
-        ctx.scale(scale, scale);
-        
-        // Enable image smoothing for better quality
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
-        // Draw the image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to PNG with high quality
-        resolve(canvas.toDataURL('image/png', 1.0));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    img.onerror = (e: Event | string) => {
-      reject(new Error('Failed to load image'));
-    };
-    img.src = svgBase64;
-  });
-};
-
 /**
- * Converts SVG base64 data URL to PNG base64 data URL with configurable options
- * @param svgBase64 - SVG data URL (data:image/svg+xml;base64,...)
+ * Converts SVG code to PNG using react-svg-to-image
+ * @param svgCode - SVG code string
  * @param options - Configuration options for conversion
  * @returns Promise<string> - PNG data URL (data:image/png;base64,...)
  */
-export const convertSvgBase64ToPngBase64 = async (
-  svgBase64: string,
+export const convertSvgToPng = async (
+  svgCode: string,
   options: {
     scale?: number;
     quality?: number;
-    backgroundColor?: string;
+    format?: 'png' | 'webp' | 'jpeg';
   } = {}
 ): Promise<string> => {
-  const { scale = 2, quality = 1.0, backgroundColor } = options;
-
-  return new Promise((resolve, reject) => {
-    const img = document.createElement('img') as HTMLImageElement;
+  const { scale = 3, quality = 1.0, format = 'png' } = options;
+  
+  try {
+    // Create a temporary SVG element
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = svgCode;
+    const svgElement = tempDiv.querySelector('svg');
     
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        
-        // Get image dimensions
-        const width = img.naturalWidth || img.width;
-        const height = img.naturalHeight || img.height;
-        
-        // Set canvas size with scaling
-        canvas.width = width * scale;
-        canvas.height = height * scale;
-        
-        // Set display size
-        canvas.style.width = width + 'px';
-        canvas.style.height = height + 'px';
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Could not get canvas context'));
-          return;
-        }
-        
-        // Scale the drawing context
-        ctx.scale(scale, scale);
-        
-        // Enable high-quality image smoothing
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        
-        // Set background color if provided
-        if (backgroundColor) {
-          ctx.fillStyle = backgroundColor;
-          ctx.fillRect(0, 0, width, height);
-        }
-        
-        // Draw the image
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to PNG with specified quality
-        const pngBase64 = canvas.toDataURL('image/png', quality);
-        resolve(pngBase64);
-      } catch (error) {
-        reject(error);
-      }
-    };
+    if (!svgElement) {
+      throw new Error('Invalid SVG code');
+    }
     
-    img.onerror = () => {
-      reject(new Error('Failed to load SVG image'));
-    };
+    // Add a unique ID if it doesn't exist
+    if (!svgElement.id) {
+      svgElement.id = 'temp-svg-' + Math.random().toString(36).substring(2, 15);
+    }
     
-    img.src = svgBase64;
-  });
+    // Temporarily add to DOM
+    document.body.appendChild(tempDiv);
+    
+    try {
+      const fileData = await toImg(svgElement.id, 'mermaid-diagram', {
+        scale: scale,
+        format: format,
+        quality: quality,
+        download: false,
+        ignore: '.ignored'
+      });
+      
+      // Remove from DOM
+      document.body.removeChild(tempDiv);
+      
+      return fileData.dataURL;
+    } catch (error) {
+      // Remove from DOM in case of error
+      document.body.removeChild(tempDiv);
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error converting SVG to PNG:', error);
+    throw error;
+  }
 };
 
 const copyToClipboard = (text: string): void => {
@@ -180,19 +150,6 @@ const copyToClipboard = (text: string): void => {
   }
 };
 
-// Function to download content as a file
-const downloadFile = (content: string, filename: string, mimeType: string): void => {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-};
-
 const handleDownloadBase = async (src: string, prompt: string) => {
   try {
       const response = await fetch(src)
@@ -201,7 +158,7 @@ const handleDownloadBase = async (src: string, prompt: string) => {
 
       const link = document.createElement('a')
       link.href = url
-      link.download = `iris-diagram`
+      link.download = `iris-diagram.png`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -232,25 +189,65 @@ const usePictureShow = () => {
   return useContext(PictureShowContext);
 };
 
-export function MessageMermaid(props: { source: string; theme: 'light' | 'dark'; generating?: boolean }) {
+
+export function MessageMermaid(props: { source: string; theme: 'default' | 'forest' | 'dark' | 'neutral' | 'null'; generating?: boolean }) {
   const { source, theme, generating } = props
 
   const [svgId, setSvgId] = useState('')
   const [svgCode, setSvgCode] = useState('')
+  
+  
+  useEffect(() => {
+    cleanupMermaidErrorNodes();
+    mermaid.initialize({
+      theme: theme,
+      markdownAutoWrap: true,
+      suppressErrorRendering: true,
+    });
+  }, [theme]);
+
+  
+  useEffect(() => {
+    const cleanup = setInterval(() => {
+      cleanupMermaidErrorNodes();
+    }, 1000); 
+
+    return () => clearInterval(cleanup);
+  }, []);
+
   useEffect(() => {
     if (generating) {
       return
     }
     ;(async () => {
-      const { id, svg } = await mermaidCodeToSvgCode(source, theme)
-      setSvgCode(svg)
-      setSvgId(id)
+      try {
+        cleanupMermaidErrorNodes(); 
+        const { id, svg } = await mermaidCodeToSvgCode(source, theme)
+        setSvgCode(svg)
+        setSvgId(id)
+        cleanupMermaidErrorNodes(); 
+      } catch (error) {
+        console.error('Mermaid rendering error:', error);
+        cleanupMermaidErrorNodes(); 
+        
+        const errorSvg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="400" height="100" viewBox="0 0 400 100">
+            <rect width="400" height="100" fill="#fee2e2" stroke="#dc2626" stroke-width="1" rx="4"/>
+            <text x="200" y="40" text-anchor="middle" fill="#dc2626" font-family="monospace" font-size="14">
+              Mermaid Syntax Error
+            </text>
+            <text x="200" y="65" text-anchor="middle" fill="#7f1d1d" font-family="monospace" font-size="10">
+              Please check your diagram syntax
+            </text>
+          </svg>
+        `;
+        setSvgCode(errorSvg);
+        setSvgId('error-' + Math.random().toString(36).substring(2, 15));
+      }
     })()
   }, [source, theme, generating])
 
   if (generating) {
-    
-    
     return <Loading />
   }
 
@@ -277,9 +274,7 @@ export function MermaidSVGPreviewDangerous(props: {
   className?: string
   generating?: boolean
 }) {
-  const { svgId, svgCode, mermaidCode, className, generating } = props
-  const { t } = useTranslation()
-  const { setPictureShow } = usePictureShow()
+  const { svgCode, mermaidCode, className, generating } = props
   
   if (!svgCode.includes('</svg>') || generating) {
     return <Loading />
@@ -318,14 +313,18 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
     <Card
       className={cn('cursor-pointer size-full group relative', className)}
       onClick={async () => {
-        
-        const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
-          scale: 3, // Higher resolution for picture show
-          quality: 1.0
-        })
-        setPictureShow({
-          picture: { url: pngBase64 },
-        })
+        try {
+          const pngBase64 = await convertSvgToPng(xmlCode, {
+            scale: 3,
+            quality: 1.0
+          });
+          setPictureShow({
+            picture: { url: pngBase64 },
+          });
+        } catch (error) {
+          console.error('Failed to convert SVG to PNG:', error);
+          toast('Failed to convert image');
+        }
       }}
     >
         <Image
@@ -336,7 +335,7 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
           aspectRatio="auto"
         />
         
-        <div className="absolute flex items-center gap-2 z-50 bottom-2 right-2  opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100">
+        <div className="absolute flex items-center gap-2 z-10 bottom-2 right-2  opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100">
           <Button
             variant="outline"
             size="sm"
@@ -344,13 +343,18 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
             onClick={(e) => {
               e.stopPropagation();
               const handleZoom = async () => {
-                const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
-                  scale: 3, // Higher resolution for zoom
-                  quality: 1.0
-                });
-                setPictureShow({
-                  picture: { url: pngBase64 },
-                });
+                try {
+                  const pngBase64 = await convertSvgToPng(xmlCode, {
+                    scale: 3,
+                    quality: 1.0
+                  });
+                  setPictureShow({
+                    picture: { url: pngBase64 },
+                  });
+                } catch (error) {
+                  console.error('Failed to convert SVG to PNG:', error);
+                  toast('Failed to convert image');
+                }
               };
               handleZoom();
             }}
@@ -376,11 +380,12 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
             onClick={(e) => {
               e.stopPropagation();
               const handleDownload = async () => {
-                const pngBase64 = await convertSvgBase64ToPngBase64(svgBase64, {
-                  scale: 4, // Higher resolution for downloads
-                  quality: 1.0
-                });
-                handleDownloadBase(pngBase64, '');
+                try {
+                  handleDownloadBase(svgBase64, '');
+                } catch (error) {
+                  console.error('Failed to download image:', error);
+                  toast('Failed to download image');
+                }
               };
               handleDownload();
             }}
@@ -392,13 +397,46 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
   )
 }
 
-async function mermaidCodeToSvgCode(source: string, theme: 'light' | 'dark') {
-  mermaid.initialize({ theme: theme === 'light' ? 'default' : 'dark' })
-  const id = 'mermaidtmp' + Math.random().toString(36).substring(2, 15)
-  const result = await mermaid.render(id, source)
-  
-  
-  
-  
-  return { id, svg: result.svg }
+async function mermaidCodeToSvgCode(source: string, theme: 'default' | 'forest' | 'dark' | 'neutral' | 'null') {
+  try {
+    cleanupMermaidErrorNodes();
+    
+    mermaid.initialize({
+      theme: theme,
+      markdownAutoWrap: true,
+      suppressErrorRendering: true, 
+    });
+    
+    const id = 'mermaidtmp' + Math.random().toString(36).substring(2, 15);
+    const result = await mermaid.render(id, source);
+    
+    
+    cleanupMermaidErrorNodes();
+    
+    return { id, svg: result.svg };
+  } catch (error) {
+    
+    cleanupMermaidErrorNodes();
+    
+    
+    const errorSvg = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="400" height="100" viewBox="0 0 400 100">
+        <rect width="400" height="100" fill="#fee2e2" stroke="#dc2626" stroke-width="1" rx="4"/>
+        <text x="200" y="30" text-anchor="middle" fill="#dc2626" font-family="monospace" font-size="12">
+          Mermaid Syntax Error
+        </text>
+        <text x="200" y="50" text-anchor="middle" fill="#7f1d1d" font-family="monospace" font-size="10">
+          Please check your diagram syntax
+        </text>
+        <text x="200" y="70" text-anchor="middle" fill="#7f1d1d" font-family="monospace" font-size="8">
+          ${error instanceof Error ? error.message.substring(0, 50) + '...' : 'Unknown error'}
+        </text>
+      </svg>
+    `;
+    
+    return {
+      id: 'error-' + Math.random().toString(36).substring(2, 15),
+      svg: errorSvg
+    };
+  }
 }

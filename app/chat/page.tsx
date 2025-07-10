@@ -183,7 +183,7 @@ const MainPage = () => {
         }
         {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className="" />}
       </div>
-      <div className='absolute bottom-0 left-0 right-0 md:bottom-2 p-2 shadow-2xl drop-shadow-2xl  drop-shadow-background'>
+      <div className='absolute bottom-0 z-50 left-0 right-0 md:bottom-2 p-2  drop-shadow-2xl  drop-shadow-background'>
         <ChatInput
           setSelectedChatModel={setSelectedChatModel}
           onSendMessage={handleSendMessage}

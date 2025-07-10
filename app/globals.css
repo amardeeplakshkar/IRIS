@@ -164,3 +164,9 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.katex-display > .katex > .katex-html {
+  display: block;
+  position: relative;
+  overflow-x: auto;
+}

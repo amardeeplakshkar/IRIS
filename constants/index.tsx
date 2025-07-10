@@ -8,8 +8,8 @@ import Link from "next/link";
 import { useTheme } from "next-themes";
 import { generateText, UIMessage } from "ai";
 import { myProvider } from "@/lib/ai/providers";
-import { MessageMermaid } from "@/components/widgets/MermaidDisplay";
 import { copyToClipboard } from "@/lib/utils";
+import { MessageMermaid } from "@/components/widgets/MermaidDisplay";
 
 export const components = {
   code: ({ node, inline, className, children, ...props }: any) => {
@@ -19,8 +19,12 @@ export const components = {
     let contentToShow;
     switch (match[1]) {
       case "mermaid":
-        contentToShow = <div className="text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900 flex items-center justify-center">
-            <MessageMermaid source={codeContent} theme={"light"} />
+        contentToShow = <div className="text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900 flex items-center justify-center max-w-md">
+            <MessageMermaid 
+                            source={codeContent} 
+                            theme="forest" 
+                            generating={false}
+                          />
         </div>
         break;
       default:

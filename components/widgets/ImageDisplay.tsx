@@ -3,7 +3,6 @@
 import { Download, ZoomIn, ZoomOut } from 'lucide-react'
 import React, { useState, useRef } from 'react'
 import { Button } from "@/components/ui/button"
-import { Skeleton } from '../ui/skeleton'
 import { cn } from '@/lib/utils'
 import { ImageGeneration } from '@/components/ui/ai-chat-image-generation-1'
 
@@ -81,17 +80,17 @@ export const ImageDisplay: React.FC<ImageDisplayProps> = ({ src, prompt }) => {
             <div className="absolute bottom-3 right-3 opacity-0 max-sm:opacity-100 group-hover:opacity-100 transition-all duration-200 flex gap-2">
                 <Button
                     onClick={toggleZoom}
-                    size="icon"
-                    variant="default"
-                    className="size-8 bg-background/80 backdrop-blur-sm hover:bg-background border border-border shadow-sm"
+                    size="sm"
+                    variant="outline"
+                    className="backdrop-blur-sm"
                 >
                     {isZoomed ? <ZoomOut size={14} /> : <ZoomIn size={14} />}
                 </Button>
                 <Button
                     onClick={handleDownload}
                     size="sm"
-                    variant="default"
-                    className="bg-background/80 backdrop-blur-sm hover:bg-background text-foreground border border-border shadow-sm"
+                    variant="outline"
+                    className="backdrop-blur-sm"
                 >
                     <Download size={14} />
                     <span className="text-xs font-medium">Download</span>
