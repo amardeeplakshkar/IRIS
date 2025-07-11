@@ -65,11 +65,13 @@ export function ToolResult({
                         {
                             toolInvocation?.result?.imageUrls &&
                             toolInvocation?.result?.imageUrls.map((imageUrl: string, index: number) => (
+                                <>
                                 <ImageDisplay
                                     key={index}
                                     src={imageUrl}
                                     prompt={toolInvocation?.result?.prompt}
                                     />
+                                    </>
                             ))
                         }
                     </div>

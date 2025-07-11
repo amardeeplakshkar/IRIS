@@ -5,6 +5,7 @@ import { ImageTool } from "@/lib/tools/imageTool";
 import { youtubeTranscription } from "@/lib/tools/youtubeTranscription";
 import { displayWeather } from "@/lib/tools/weatherTool";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { google } from '@ai-sdk/google';
 
 export const maxDuration = 60;
 
@@ -67,9 +68,7 @@ export async function POST(request: Request) {
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText({
-          model:  hasNonImageAttachments
-          ? openrouter('google/gemma-3-27b-it:free')
-          : myProvider.languageModel(selectedChatModel),
+          model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel }),
           messages: processedMessages,
           maxSteps: 5,
