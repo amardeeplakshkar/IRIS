@@ -4,6 +4,8 @@
   <img src="public/iris-logo.png" alt="IRIS Logo" width="200" height="200" style="display: none;">
   <h1>IRIS - Intelligent Response & Information System</h1>
   <p>A powerful AI assistant with multi-modal capabilities</p>
+  <img src="public/og-image.png" alt="IRIS Logo" width="480" height="270" style="display: none;">
+
   
   [![GitHub](https://img.shields.io/github/license/amardeeplakshkar/iris)](https://github.com/amardeeplakshkar/iris/blob/main/LICENSE)
   [![Next.js](https://img.shields.io/badge/Next.js-14-black)](https://nextjs.org/)
