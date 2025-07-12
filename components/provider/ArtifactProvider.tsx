@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode } from 'react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { SandpackPredefinedTemplate } from '@codesandbox/sandpack-react'
 
 export type ArtifactType = 'image' | 'mermaid' | 'code' | 'text'
 
@@ -10,6 +11,7 @@ export interface ArtifactData {
   title: string
   type: ArtifactType
   content: any 
+  template?: SandpackPredefinedTemplate
   metadata?: Record<string, any> 
 }
 

@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
-import { Copy, Play, X } from 'lucide-react'
+import { Copy, Play, StopCircle, X } from 'lucide-react'
 import { useArtifact } from '@/components/provider/ArtifactProvider'
 import { cn, copyToClipboard } from '@/lib/utils'
 import ImageDisplay from './ImageDisplay'
 import { MessageMermaid } from './MermaidDisplay'
 import { MemoizedMarkdown } from '../core/MemoizedMarkdown'
+import CodeSandpack from './CodeSandpack'
+import { SandpackFiles, SandpackPredefinedTemplate } from '@codesandbox/sandpack-react'
 
 const Artifact = () => {
     const { openArtifact, setOpenArtifact } = useArtifact();
     const [mounted, setMounted] = useState(false);
-    
+    const [showPreview, setShowPreview] = useState(false);
+
     useEffect(() => {
         setMounted(true);
         
@@ -35,7 +38,11 @@ const Artifact = () => {
                 <h1 className='font-semibold line-clamp-1'>{openArtifact?.title}</h1>
             </div>
             <div className='flex items-center gap-2'>
-               {openArtifact?.type === 'code' && <Button size={'sm'} variant="outline"><Play/>Run</Button>}
+               {openArtifact?.type === 'code' && <Button onClick={() => setShowPreview(!showPreview)} size={'sm'} variant="outline">{!showPreview ? <>
+                <Play/>Run
+              </> : <>
+              <StopCircle/>Stop
+              </>}</Button>}
                 <Button onClick={() => copyToClipboard(openArtifact?.content || '')} size={'sm'} variant="outline"><Copy/>Copy</Button>
             </div>
         </header>
@@ -47,9 +54,9 @@ const Artifact = () => {
                 <MessageMermaid source={openArtifact.content} theme="forest" />
             )}
             {openArtifact?.type === 'code' && (
-                <pre className="p-4 bg-gray-800 rounded-md overflow-auto">
-                    <code className="text-sm text-white">{openArtifact.content}</code>
-                </pre>
+                <div className='-m-4'>
+                <CodeSandpack  code={openArtifact.content} showPreview={showPreview}/>
+                </div>
             )}
             {openArtifact?.type === 'text' && (
                 <MemoizedMarkdown content={openArtifact.content} id={openArtifact.id} />

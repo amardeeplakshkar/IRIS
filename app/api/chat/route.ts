@@ -82,7 +82,8 @@ export async function POST(request: Request) {
             const tools: ('ImageTool' | 'displayWeather' | 'youtubeTranscription' | 'CreateArtifactTool')[] = [
               'ImageTool',
               'displayWeather',
-              'youtubeTranscription'
+              'youtubeTranscription',
+              'CreateArtifactTool'
             ];
             
             if (selectedChatModel === 'artifact-model') {

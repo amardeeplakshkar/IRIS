@@ -4,7 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { useArtifact } from '@/components/provider/ArtifactProvider'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Eye } from 'lucide-react'
+import { ChartArea, Code, Eye, FileText, Image } from 'lucide-react'
 
 interface ArtifactResultProps {
   result: {
@@ -39,11 +39,11 @@ const ArtifactResult: React.FC<ArtifactResultProps> = ({ result }) => {
 
   const { artifact } = result
   const artifactTypeIcon = {
-    image: '🖼️',
-    mermaid: '📊',
-    code: '💻',
-    text: '📝'
-  }[artifact.type] || '📄'
+    image: <Image size={16}/>,
+    mermaid: <ChartArea size={16}/>,
+    code: <Code size={16}/>,
+    text: <FileText size={16}/>
+  }[artifact.type] || <FileText size={16}/>
 
   const handleOpenArtifact = () => {
     setOpenArtifact({
@@ -56,7 +56,7 @@ const ArtifactResult: React.FC<ArtifactResultProps> = ({ result }) => {
   }
 
   return (
-    <Card className="w-full max-w-[80dvw]" onClick={handleOpenArtifact}>
+    <Card className="w-full max-w-[80dvw] my-2" onClick={handleOpenArtifact}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <span>{artifactTypeIcon}</span>

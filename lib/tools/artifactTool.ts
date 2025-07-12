@@ -13,6 +13,10 @@ export const CreateArtifactTool = tool({
         type: z
             .enum(['image', 'mermaid', 'code', 'text'])
             .describe('Type of artifact to create'),
+        template: z
+            .string()
+            .optional()
+            .describe('Template for code artifact only like "react" or "node" or "html" or "python" etc'),
         content: z
             .string()
             .min(1, 'Content is required')
@@ -22,7 +26,7 @@ export const CreateArtifactTool = tool({
             .optional()
             .describe('Additional metadata for the artifact'),
     }),
-    execute: async function ({ title, type, content, metadata }) {
+    execute: async function ({ title, type, template, content, metadata }) {
         try {
             // Generate a unique ID for the artifact
             const id = nanoid();
@@ -32,11 +36,11 @@ export const CreateArtifactTool = tool({
                 id,
                 title,
                 type: type as ArtifactType,
+                template,
                 content,
                 metadata: metadata || {}
             };
-            
-            // Return the artifact data
+    console.log(artifactData);            
             return {
                 success: true,
                 message: `Artifact "${title}" created successfully`,

@@ -1,8 +1,8 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
-import { Copy, Play, X } from 'lucide-react'
+import { Copy, Play, StopCircle, X } from 'lucide-react'
 import { useArtifact } from '@/components/provider/ArtifactProvider'
 import { 
   Sheet, 
@@ -14,25 +14,35 @@ import ImageDisplay from './ImageDisplay'
 import { MessageMermaid } from './MermaidDisplay'
 import { copyToClipboard } from '@/lib/utils'
 import { MemoizedMarkdown } from '../core/MemoizedMarkdown'
+import CodeSandpack from './CodeSandpack'
+import { SandpackPredefinedTemplate } from '@codesandbox/sandpack-react'
 
 const ArtifactDrawer = () => {
   const { openArtifact, setOpenArtifact } = useArtifact()
-  
+      const [showPreview, setShowPreview] = useState(false);  
+     
+
   return (
     <Sheet open={!!openArtifact} onOpenChange={(open) => {
       if (!open) setOpenArtifact(null)
     }}>
-      <SheetContent  side="right" className="w-full sm:max-w-md p-0">
+      <SheetContent  side="right" className="w-full sm:max-w-md p-0 gap-0">
         <SheetHeader className="p-2 border-b">
           <div className='flex items-center justify-between w-full'>
             <div className='flex items-center gap-2'>
               <Button onClick={() => setOpenArtifact(null)} size={'sm'} variant="outline">
                 <X/>
               </Button>
-              <SheetTitle>{openArtifact?.title}</SheetTitle>
+              <SheetTitle className='line-clamp-1'>{openArtifact?.title}</SheetTitle>
             </div>
             <div className='flex items-center gap-2'>
-             {openArtifact?.type === 'code' && <Button size={'sm'} variant="outline"><Play/>Run</Button>}
+             {openArtifact?.type === 'code' && <Button onClick={() => setShowPreview(!showPreview)} size={'sm'} variant="outline">
+              {!showPreview ? <>
+                <Play/>Run
+              </> : <>
+              <StopCircle/>Stop
+              </>}
+              </Button>}
               <Button onClick={() => copyToClipboard(openArtifact?.content || '')} size={'sm'} variant="outline"><Copy/>Copy</Button>
             </div>
           </div>
@@ -45,9 +55,9 @@ const ArtifactDrawer = () => {
                           <MessageMermaid source={openArtifact.content} theme="forest" />
                       )}
                       {openArtifact?.type === 'code' && (
-                          <pre className="p-4 bg-gray-800 rounded-md overflow-auto">
-                              <code className="text-sm text-white">{openArtifact.content}</code>
-                          </pre>
+                          <div className='-m-4'>
+                          <CodeSandpack  code={openArtifact.content} showPreview={showPreview}/>
+                          </div>
                       )}
                       {openArtifact?.type === 'text' && (
                           <MemoizedMarkdown content={openArtifact.content} id={openArtifact.id} />
