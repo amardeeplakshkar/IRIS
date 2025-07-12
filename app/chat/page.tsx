@@ -9,12 +9,18 @@ import { FileWithPreview, PastedContent } from '@/types'
 import { Attachment } from 'ai'
 import { isTextualFile, readFileAsText } from '@/components/helpers'
 import { ChatInput } from '@/components/core/ChatInputSecond'
+import Artifact from '@/components/widgets/Artifact'
+import ArtifactDrawer from '@/components/widgets/ArtifactDrawer'
+import { useArtifact } from '@/components/provider/ArtifactProvider'
+import { PlusIcon } from 'lucide-react'
 
 const MainPage = () => {
+      const { openArtifact, setOpenArtifact, isMobile } = useArtifact();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const userMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const [isToolCalling, setIsToolCalling] = React.useState(false);
   const [isError, setIsError] = React.useState('');
+  const [showArtifactCreator, setShowArtifactCreator] = React.useState(false);
   const [selectedChatModel, setSelectedChatModel] = React.useState('chat-model');
   const {
     messages,
@@ -147,7 +153,8 @@ const MainPage = () => {
   };
 
   return (
-    <div className='flex relative flex-col h-[calc(100dvh-4rem)]'>
+    <div className={`grid ${!openArtifact || isMobile ? 'grid-cols-none' : 'grid-cols-10'} transition-all duration-300 ease-in-out`}>
+    <div className={`${openArtifact && !isMobile ? 'col-span-3' : 'col-span-full'} flex relative flex-col h-[calc(100dvh-4rem)]`}>
       <div ref={messagesContainerRef} className='flex-1 overflow-y-auto pb-[7.5rem]'>
         <div className='p-4 w-full max-w-4xl mx-auto'>
           {messages?.map(m => (
@@ -192,6 +199,12 @@ const MainPage = () => {
           disabled={isLoading}
         />
       </div>
+    </div>
+    {/* Desktop Artifact */}
+    {openArtifact && !isMobile && <Artifact />}
+    
+    {/* Mobile Artifact Drawer */}
+    {isMobile && <ArtifactDrawer />}
     </div>
   )
 }

@@ -58,7 +58,7 @@ export const components = {
         break;
     }
     return !inline && match ? (
-      <>{contentToShow}</>
+      <div className="w-full max-w-[80dvw]">{contentToShow}</div>
     ) : (
       <Badge className="whitespace-pre-wrap" {...props}>
         {children}

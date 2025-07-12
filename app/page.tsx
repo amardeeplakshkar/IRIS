@@ -50,21 +50,16 @@ const MainPage = () => {
       setIsToolCalling(false);
     }
   }, [isLoading, isToolCalling]);
-  // Custom function to handle scrolling based on message type
   const scrollToMessage = () => {
     if (messages.length === 0) return;
-
-    // Get the last message
     const lastMessage = messages[messages.length - 1];
 
-    // If it's a user message, position it at the top with space
     if (lastMessage.role === 'user') {
       const userMessageElement = userMessageRefs.current.get(lastMessage.id);
       if (userMessageElement && messagesContainerRef.current) {
-        // Calculate position to place user message at top with some padding
         const containerTop = messagesContainerRef.current.getBoundingClientRect().top;
         const messageTop = userMessageElement.getBoundingClientRect().top;
-        const scrollOffset = messageTop - containerTop - 20; // 20px padding at top
+        const scrollOffset = messageTop - containerTop - 20; 
 
         messagesContainerRef.current.scrollBy({
           top: scrollOffset,
@@ -72,7 +67,6 @@ const MainPage = () => {
         });
       }
     } else {
-      // For assistant messages, just scroll to the bottom
       if (messagesContainerRef.current) {
         messagesContainerRef.current.scrollTo({
           top: messagesContainerRef.current.scrollHeight,
@@ -87,12 +81,10 @@ const MainPage = () => {
     return messages[messages.length - 1].role === 'user';
   }, [messages]);
 
-  // Scroll when messages change
   useEffect(() => {
     scrollToMessage();
   }, [messages]);
 
-  // Function to set ref for user messages
   const setUserMessageRef = (element: HTMLDivElement | null, messageId: string) => {
     if (element) {
       userMessageRefs.current.set(messageId, element);

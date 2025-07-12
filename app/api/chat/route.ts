@@ -4,6 +4,7 @@ import { systemPrompt } from "@/lib/ai/prompts";
 import { ImageTool } from "@/lib/tools/imageTool";
 import { youtubeTranscription } from "@/lib/tools/youtubeTranscription";
 import { displayWeather } from "@/lib/tools/weatherTool";
+import { CreateArtifactTool } from "@/lib/tools/artifactTool";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { google } from '@ai-sdk/google';
 
@@ -73,18 +74,28 @@ export async function POST(request: Request) {
           messages: processedMessages,
           maxSteps: 5,
           toolChoice: 'auto',
-          experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning' || selectedChatModel === 'search-model'
-              ? []
-              : [
-                'ImageTool',
-                'displayWeather',
-                'youtubeTranscription'
-              ],
+          experimental_activeTools: (() => {
+            if (selectedChatModel === 'chat-model-reasoning' || selectedChatModel === 'search-model') {
+              return [];
+            }
+            
+            const tools: ('ImageTool' | 'displayWeather' | 'youtubeTranscription' | 'CreateArtifactTool')[] = [
+              'ImageTool',
+              'displayWeather',
+              'youtubeTranscription'
+            ];
+            
+            if (selectedChatModel === 'artifact-model') {
+              tools.push('CreateArtifactTool');
+            }
+            
+            return tools;
+          })(),
           tools: {
             ImageTool,
             displayWeather,
-            youtubeTranscription
+            youtubeTranscription,
+            CreateArtifactTool
           },
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_telemetry: {

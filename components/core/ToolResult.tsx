@@ -5,6 +5,7 @@ import { ToolInvocation } from 'ai';
 import ImageDisplay from '../widgets/ImageDisplay';
 import { TextShimmerWave } from '../ui/text-shimmer-wave';
 import WeatherDisplay from '../widgets/WeatherDisplay';
+import ArtifactResult from './ArtifactResult';
 
 interface ToolResultProps {
     isLoading: boolean;
@@ -18,20 +19,22 @@ export function ToolResult({
     id
 }: ToolResultProps) {
     const { toolName, toolCallId, state } = toolInvocation;
-    const showResultText = ['displayWeather', 'webSearchTool', 'ImageTool', 'youtubeTranscription', 'cameraAiTool'].includes(toolName);
+    const showResultText = ['displayWeather', 'webSearchTool', 'ImageTool', 'youtubeTranscription', 'cameraAiTool', 'CreateArtifactTool'].includes(toolName);
     const toolCallMessages: Record<string, string> = {
         displayWeather: 'Analysing Weather...',
         webSearchTool: 'Searching Web...',
         ImageTool: 'Generating Image...',
         youtubeTranscription: 'Analysing Video...',
-        cameraAiTool: 'Analysing Video'
+        cameraAiTool: 'Analysing Video',
+        CreateArtifactTool: 'Creating Artifact...'
     }
     const toolResultMessage: Record<string, string> = {
         displayWeather: 'Weather Result',
         webSearchTool: 'Web Search Result',
         ImageTool: 'Image Generated',
         youtubeTranscription: 'Video Transcription Result',
-        cameraAiTool: 'Camera AI Result'
+        cameraAiTool: 'Camera AI Result',
+        CreateArtifactTool: 'Artifact Created'
     }
     const getToolResult = (toolName: string, toolInvocation: any) => {
         switch (toolName) {
@@ -75,6 +78,11 @@ export function ToolResult({
                             ))
                         }
                     </div>
+                );
+                
+            case 'CreateArtifactTool':
+                return (
+                    <ArtifactResult result={toolInvocation?.result} />
                 );
 
             default:
