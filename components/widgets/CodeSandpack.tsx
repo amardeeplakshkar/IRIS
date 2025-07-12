@@ -5,20 +5,45 @@ import { useTheme } from 'next-themes';
 
 const CodeSandpack = ({ code, showPreview = false }: { code: string, showPreview?: boolean }) => {
     const { theme } = useTheme()
+
+    function extractLibraryNames(code: string) {
+        const regex = /import\s+(?:(?:[^{}]*?|\{[^}]*\})\s+from\s+['"])([^'"]+)['"]/g;
+        const libraries = [];
+        let match;
+        
+        while ((match = regex.exec(code)) !== null) {
+          libraries.push(match[1]);
+        }
+        
+        return libraries;
+    }
+    
+    function createDependenciesObject(libraries: string[]) {
+        const dependencies: Record<string, string> = {
+            'react': 'latest',
+            'react-dom': 'latest',
+            'lucide-react': 'latest',
+            'tailwindcss': 'latest',
+            'uuid': 'latest'
+        };
+        
+        libraries.forEach(lib => {
+            dependencies[lib] = 'latest';
+        });
+        
+        return dependencies;
+    }
+    
+    const extractedLibraries = extractLibraryNames(code || '');
+    const dependencies = createDependenciesObject(extractedLibraries);
+
     return (
         <SandpackProvider
         options={{
         externalResources: ["https://cdn.tailwindcss.com"]
       }}
             customSetup={{
-                dependencies: {
-                    react: 'latest',
-                    'react-dom': 'latest',
-                    "lucide-react": "latest",
-                    "tailwindcss": "latest",
-                    "@tailwindcss/typography": "latest",
-                    "uuid": "latest"
-                }
+                dependencies: dependencies
             }}
             theme={theme === 'dark' ? dracula : 'light'}
             autoSave='true'

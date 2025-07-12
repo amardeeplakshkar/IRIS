@@ -171,6 +171,11 @@ export const components = {
   td({ node, ...props }: any) {
     return <TableCell className="" {...props} />;
   },
+  p({ node, ...props }: any) {
+    return <p style={{
+      wordBreak: 'break-word',
+    }} {...props} />;
+  },
   blockquote({ node, ...props }: any) {
     return (
       <blockquote
