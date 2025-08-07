@@ -56,12 +56,22 @@ const CodeSandpack = ({ code, showPreview = false }: { code: string, showPreview
                 height: '92dvh'
             }}
             >
-                {showPreview ? <SandpackPreview
+                {showPreview ? 
+                <>
+                <SandpackCodeEditor 
+                className='sr-only!'
+                    style={{
+                        height: '92dvh',
+                    }}
+                    />
+                <SandpackPreview
                     style={{
                         height: '92dvh'
                     }}
                     showOpenInCodeSandbox={false}
-                /> :
+                    /> 
+                    </>
+                    :
                     <SandpackCodeEditor 
                     style={{
                         height: '92dvh'

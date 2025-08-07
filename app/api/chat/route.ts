@@ -7,7 +7,10 @@ import { displayWeather } from "@/lib/tools/weatherTool";
 import { CreateArtifactTool } from "@/lib/tools/artifactTool";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { google } from '@ai-sdk/google';
-
+import prisma from "@/lib/db";
+import { auth } from '@clerk/nextjs/server';
+import { processExperimentalAttachments } from "@/lib/utils/attachments";
+import { webSearchTool } from "@/lib/tools/searchSecond";
 export const maxDuration = 60;
 
 const openrouter = createOpenRouter({
@@ -15,10 +18,76 @@ const openrouter = createOpenRouter({
 });
 
 export async function POST(request: Request) {
-
   try {
-    const { messages, selectedChatModel } =
+    // Get authentication
+    const { userId } = await auth();
+    if (!userId) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+
+    const { messages, selectedChatModel, chatId } =
       await request.json();
+
+    // Verify chat exists and belongs to user
+    const existingChat = await prisma.chat.findUnique({
+      where: {
+        id: chatId,
+        clerkId: userId,
+      },
+    });
+
+    if (!existingChat) {
+      return new Response('Chat not found', { status: 404 });
+    }
+
+    // Save user message to database (last message should be from user)
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === 'user') {
+      try {
+        // Process parts and attachments using utility function
+        const { parts, attachments } = processExperimentalAttachments(
+          lastMessage.content,
+          lastMessage.experimental_attachments
+        );
+
+        // Create parts array for user message in the expected format
+        const userParts: Array<{
+          type: string;
+          text?: string;
+          content?: string;
+          url?: string;
+          metadata?: any;
+          order: number;
+        }> = [];
+
+        // Add any existing parts from the message
+        if (lastMessage.parts && Array.isArray(lastMessage.parts)) {
+          lastMessage.parts.forEach((part: any, index: number) => {
+            userParts.push({
+              type: part.type || 'text',
+              text: part.text || part.content,
+              content: part.content,
+              url: part.url,
+              metadata: part.metadata,
+              order: index + 1,
+            });
+          });
+        }
+
+        await prisma.message.create({
+          data: {
+            chatId: chatId,
+            content: lastMessage.content,
+            role: 'user',
+            parts: userParts,
+            attachments: lastMessage.experimental_attachments || [],
+          },
+        });
+      } catch (error) {
+        console.error('Error saving user message:', error);
+        return new Response('Error saving message to database', { status: 500 });
+      }
+    }
 
       let hasNonImageAttachments = false;
       for (const message of messages) {
@@ -66,6 +135,8 @@ export async function POST(request: Request) {
       return message;
     });
 
+    let assistantResponse = '';
+
     const stream = createDataStream({
       execute: (dataStream) => {
         const result = streamText({
@@ -75,15 +146,16 @@ export async function POST(request: Request) {
           maxSteps: 5,
           toolChoice: 'auto',
           experimental_activeTools: (() => {
-            if (selectedChatModel === 'chat-model-reasoning' || selectedChatModel === 'search-model') {
+            if (selectedChatModel === 'chat-model-reasoning') {
               return [];
             }
             
-            const tools: ('ImageTool' | 'displayWeather' | 'youtubeTranscription' | 'CreateArtifactTool')[] = [
+            const tools: ('ImageTool' | 'displayWeather' | 'youtubeTranscription' | 'CreateArtifactTool' | 'webSearchTool')[] = [
               'ImageTool',
               'displayWeather',
               'youtubeTranscription',
-              'CreateArtifactTool'
+              'CreateArtifactTool',
+              'webSearchTool'
             ];
             
             if (selectedChatModel === 'artifact-model') {
@@ -96,7 +168,8 @@ export async function POST(request: Request) {
             ImageTool,
             displayWeather,
             youtubeTranscription,
-            CreateArtifactTool
+            CreateArtifactTool,
+            webSearchTool
           },
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_telemetry: {
@@ -111,7 +184,8 @@ export async function POST(request: Request) {
           sendReasoning: true,
         });
       },
-      onError: () => {
+      onError: (error) => {
+        console.error('Stream error:', error);
         return 'Oops, an error occurred!';
       },
     });
@@ -119,7 +193,18 @@ export async function POST(request: Request) {
 
     return new Response(stream);
   } catch (error) {
-    console.error(error);
-    return new Response('Oops, an error occurred!', { status: 500 });
+    console.error('Chat API error:', error);
+    
+    // Handle specific error types
+    if (error instanceof Error) {
+      if (error.message.includes('Unauthorized')) {
+        return new Response('Unauthorized', { status: 401 });
+      }
+      if (error.message.includes('not found')) {
+        return new Response('Chat not found', { status: 404 });
+      }
+    }
+    
+    return new Response('Internal server error', { status: 500 });
   }
 }

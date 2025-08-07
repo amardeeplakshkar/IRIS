@@ -1,145 +1,158 @@
-"use client"
-import React, { useRef, useEffect, useMemo } from 'react'
-import { PromptBox } from '@/components/ui/chatgpt-prompt-input'
-import { useChat } from '@ai-sdk/react'
-import ChatMessage, { ThinkingMessage } from '@/components/core/ChatMessage'
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import { AlertCircleIcon, RefreshCcw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+'use client';
 
-const MainPage = () => {
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const userMessageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const [isToolCalling, setIsToolCalling] = React.useState(false);
-  const [isError, setIsError] = React.useState('');
-  const [selectedChatModel, setSelectedChatModel] = React.useState('chat-model');
-  const {
-    messages,
-    input,
-    handleSubmit,
-    setInput,
-    handleInputChange,
-    isLoading,
-    reload,
-    status,
-    error,
-    experimental_resume,
-    
-  } = useChat({
-    body: {
-      selectedChatModel
-    },
-    onFinish: (message, { usage, finishReason }) => {
-      console.log('Finished streaming message:', message);
-      console.log('Token usage:', usage);
-      console.log('Finish reason:', finishReason);
-    },
-    onError: error => {
-      console.error('An error occurred:', error);
-      setIsError(error.message)
-    },
-    onResponse: response => {
-      console.log('Received HTTP response from server:', response);
-    },
-    onToolCall: (toolCall) => {
-      setIsToolCalling(true);
-    },
-  })
-  useEffect(() => {
-    if (!isLoading && isToolCalling) {
-      setIsToolCalling(false);
-    }
-  }, [isLoading, isToolCalling]);
-  const scrollToMessage = () => {
-    if (messages.length === 0) return;
-    const lastMessage = messages[messages.length - 1];
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { date, z } from "zod";
+import { Form, FormField } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import TextareaAutosize from "react-textarea-autosize";
+import { Button } from "@/components/ui/button";
+import { ArrowUpIcon, Loader2Icon } from "lucide-react";
+import { useTRPC } from "@/lib/trpc/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useClerk } from "@clerk/nextjs";
+import { useMessages } from "@/components/provider/MessagesPorvider";
 
-    if (lastMessage.role === 'user') {
-      const userMessageElement = userMessageRefs.current.get(lastMessage.id);
-      if (userMessageElement && messagesContainerRef.current) {
-        const containerTop = messagesContainerRef.current.getBoundingClientRect().top;
-        const messageTop = userMessageElement.getBoundingClientRect().top;
-        const scrollOffset = messageTop - containerTop - 20; 
+const formScema = z.object({
+    value: z.string()
+        .min(1, { message: "Value is required" })
 
-        messagesContainerRef.current.scrollBy({
-          top: scrollOffset,
-          behavior: 'smooth'
-        });
-      }
-    } else {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTo({
-          top: messagesContainerRef.current.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
-    }
-  };
+});
 
-  const isWaitingForResponse = useMemo(() => {
-    if (messages.length === 0) return false;
-    return messages[messages.length - 1].role === 'user';
-  }, [messages]);
+const ProjectForm = () => {
+    const router =useRouter();
+    const { initialPrompt, setInitialPrompt, setInitialMessages, initialMessages } = useMessages();
+    const queryClient = useQueryClient();
+    const clerk=useClerk();
+    const trpc = useTRPC();
+    const form = useForm<z.infer<typeof formScema>>({
+        resolver: zodResolver(formScema),
+        defaultValues: {
 
-  useEffect(() => {
-    scrollToMessage();
-  }, [messages]);
+            value: "",
 
-  const setUserMessageRef = (element: HTMLDivElement | null, messageId: string) => {
-    if (element) {
-      userMessageRefs.current.set(messageId, element);
-    }
-  };
-
-  return (
-    <div className='flex relative flex-col h-[calc(100dvh-4rem)]'>
-      <div ref={messagesContainerRef} className='flex-1 overflow-y-auto mb-[7.5rem]'>
-        <div className='p-4 w-full max-w-4xl mx-auto'>
-          {messages?.map(m => (
-            <div
-              key={m.id}
-              ref={m.role === 'user' ? (el) => setUserMessageRef(el, m.id) : undefined}
-              className={`mb-4 ${m.role === 'user' ? 'mt-4' : ''}`}
-            >
-              <ChatMessage status={status} reload={reload} key={m.id} isToolCalling={isToolCalling} isLoading={isLoading} error={isError} msg={m} variant={m.role === 'user' ? 'sent' : 'received'} isUser={m.role === 'user'} messages={messages} />
-              <br />
-            </div>
-          ))}
-        </div>
-        {status === 'submitted' &&
-        messages.length > 0 &&
-        messages[messages.length - 1].role === 'user' && <ThinkingMessage />}
-        {isError && error &&
-          <div className='p-2'>
-            <Alert variant={'destructive'}>
-              <AlertCircleIcon />
-              <AlertTitle>Oh no!</AlertTitle>
-              <AlertDescription>
-                {isError}
-                {error && <>{JSON.stringify(error)}</>}
-              </AlertDescription>
-            </Alert>
-              <Button className='mt-2' onClick={()=>{
-                reload()
-                setIsError("")
-                }} variant={'outline'}>
-                <RefreshCcw />
-              </Button>
-          </div>
         }
-        {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className="" />}
-      </div>
-      <div className='absolute bottom-0 left-0 right-0 md:bottom-2'>
-        <PromptBox
-          setSelectedChatModel={setSelectedChatModel}
-          value={input}
-          setValue={setInput}
-          handleSubmit={handleSubmit}
-          handleInputChange={handleInputChange}
-        />
-      </div>
-    </div>
-  )
-}
+    });
 
-export default MainPage
+    const createProject = useMutation(trpc.chat.create.mutationOptions({
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: trpc.chat.getMany.queryKey() });
+            router.push(`/chat/${data.id}`);
+            setInitialMessages([]);
+            setInitialPrompt('');
+            // queryClient.invalidateQueries(
+            //     trpc.usage.status.queryOptions()
+            //   );
+          },
+          onError: (error) => {
+            toast.error(error.message);
+            if (error.data?.code === "UNAUTHORIZED") {
+              clerk.openSignIn();
+            }
+          
+            if (error.data?.code === "TOO_MANY_REQUESTS") {
+                router.push("/pricing");
+              }
+          },
+    }));
+
+    const onSubmit = async (values: z.infer<typeof formScema>) => {
+
+        await createProject.mutateAsync({
+            value: values.value,
+        })
+        setInitialPrompt(values.value);
+    }
+    
+    const onSelect = (value: string) => {
+        form.setValue("value", value, {
+            shouldDirty: true,    
+            shouldValidate: true,
+            shouldTouch: true,
+        });
+    }; 
+    
+    const isPending = createProject.isPending;
+    const isButtonDisbled = isPending || !form.formState.isValid;
+    const [isFocuesd, setIsFocused] = useState(false);
+  
+
+    return (
+
+       
+        <Form {...form}>
+            <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className={cn("relative border min-w-sm sm:min-w-md md:min-w-lg lg:min-w-xl p-4 pt-1 rounded-xl bg-sidebar transition-all",
+                    isFocuesd && "shadow-xs",
+             
+                )}
+            >
+
+                <FormField
+                    control={form.control}
+                    name="value"
+                    render={({ field }) => (
+
+                        <TextareaAutosize
+                            {...field}
+                            disabled={isPending}
+                            onFocus={() => setIsFocused(true)}
+                            onBlur={() => setIsFocused(false)}
+                            minRows={2}
+                            maxRows={8}
+                            className="pt-4 resize-none border-none w-full outline-none bg-transparent"
+                            placeholder="what would you like to build?"
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                                    e.preventDefault();
+                                    form.handleSubmit(onSubmit)(e);
+                                }
+
+                            }}
+                        />
+
+                    )}
+                />
+
+                <div className="flex gap-x-2 items-end justify-between pt-2">
+                    <div className="text-[10px] text-muted-foreground font-mono">
+
+                        <kbd className="ml-auto pointer-events-auto inline-flex h-5 select-none items-center
+       gap-1 rounded border bg-muted  px-1.5 font-mono text=[10px] font-medium ">
+
+                            <span>&#8984;</span>Enter
+                        </kbd>
+                        &nbsp;to Submit
+
+                    </div>
+
+                    <Button
+                        disabled={isButtonDisbled}
+                        className={cn("size-8 rounded-full",
+                            isButtonDisbled && "bg-muted-foreground border"
+                        )}>
+                        {isPending ? (<Loader2Icon
+                            className="size-4 animate-spin" />) :
+                            (
+                                 <ArrowUpIcon />
+
+                            )
+
+                        }
+                        
+                      
+                    </Button>
+                </div>
+            </form>
+
+            <div className="flex-wrap justify-center gap-2 hidden md:flex max-w-3xl">
+  {}
+</div>
+        </Form>
+    )
+}
+export default ProjectForm 

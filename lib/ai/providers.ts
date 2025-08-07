@@ -29,8 +29,8 @@ const image = createOpenAI({
 export const myProvider = customProvider({
     languageModels: {
         'chat-model': openai('openai-fast'),
-        'search-model': openai('searchgpt'),
-        'chat-model-deepresearch': openai('openai-reasoning'),
+        'search-model': openai('openai'),
+        // 'chat-model-deepresearch': openai('openai-reasoning'),
         'chat-model-reasoning': wrapLanguageModel({
             model: openai('deepseek-reasoning'),
             middleware: extractReasoningMiddleware({ tagName: 'think' }),

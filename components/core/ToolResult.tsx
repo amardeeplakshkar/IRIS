@@ -6,6 +6,7 @@ import ImageDisplay from '../widgets/ImageDisplay';
 import { TextShimmerWave } from '../ui/text-shimmer-wave';
 import WeatherDisplay from '../widgets/WeatherDisplay';
 import ArtifactResult from './ArtifactResult';
+import SearchResults from '../widgets/SearchResults';
 
 interface ToolResultProps {
     isLoading: boolean;
@@ -38,6 +39,11 @@ export function ToolResult({
     }
     const getToolResult = (toolName: string, toolInvocation: any) => {
         switch (toolName) {
+            case 'webSearchTool':
+                return (
+                    <SearchResults result={toolInvocation?.result || {}}/>                        
+                );
+
             case 'displayWeather':
                 if (toolInvocation?.result?.location?.name) {
                     return (

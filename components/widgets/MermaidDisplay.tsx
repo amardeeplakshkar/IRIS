@@ -1,7 +1,7 @@
-import { useEffect, useState, useMemo, createContext, useContext } from 'react'
+import { useEffect, useState, useMemo, createContext, useContext, useRef } from 'react'
 import mermaid from 'mermaid'
 import React from 'react'
-import { Copy, ZoomIn, Download, Loader2 } from 'lucide-react'
+import { Copy, ZoomIn, Download, Loader2, ZoomOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -9,7 +9,6 @@ import { Button } from '../ui/button'
 import { Card, CardContent } from '../ui/card'
 import Image from '@/lib/ui/image'
 import toImg from 'react-svg-to-image'
-
 
 type PictureShowContextType = {
   setPictureShow: (data: {
@@ -289,6 +288,106 @@ export function MermaidSVGPreviewDangerous(props: {
   )
 }
 
+type ImageDisplayProps = {
+  src: string
+  prompt: string
+}
+
+export const ImageDisplay: React.FC<ImageDisplayProps> = ({ src, prompt }) => {
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [isZoomed, setIsZoomed] = useState(false)
+  const imageRef = useRef<HTMLImageElement>(null)
+
+  const handleDownload = async () => {
+      try {
+          const response = await fetch(src)
+          const blob = await response.blob()
+          const url = URL.createObjectURL(blob)
+
+          const link = document.createElement('a')
+          link.href = url
+          link.download = `ai-image-${prompt.substring(0, 20).replace(/\s+/g, '-').toLowerCase()}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+      } catch (error) {
+          console.error('Download failed:', error)
+      }
+  }
+
+  const toggleZoom = () => {
+      setIsZoomed(!isZoomed)
+  }
+
+  const imageContent = (
+      <div className={cn(
+          "rounded-xl overflow-hidden bg-card border border-border relative",
+          "transition-all duration-300 ease-in-out",
+          "hover:shadow-lg dark:hover:shadow-primary/5",
+          isZoomed ? "z-50" : ""
+      )}>
+          {error && (
+              <div className="absolute inset-0 flex flex-col gap-2 items-center justify-center bg-muted rounded-xl">
+                  <div className="size-12 rounded-full bg-muted-foreground/10 flex items-center justify-center">
+                      <span className="text-muted-foreground text-xl">!</span>
+                  </div>
+                  <p className="text-muted-foreground font-medium">Failed to load image</p>
+              </div>
+          )}
+          
+          <div className={cn(
+              "overflow-hidden",
+              isZoomed ? "fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50" : ""
+          )}>
+              <img
+                  ref={imageRef}
+                  src={src}
+                  alt={'Generating Image...'}
+                  className={cn(
+                      "max-w-md object-contain max-h-96 w-full rounded-xl transition-all duration-300",
+                      isZoomed ? "max-h-[90vh] max-w-[90vw] object-contain cursor-zoom-out" : "cursor-zoom-in",
+                      "hover:brightness-105 transition-all"
+                  )}
+                  onLoad={() => setIsLoading(false)}
+                  onError={() => {
+                      setIsLoading(false)
+                      setError(true)
+                  }}
+                  onClick={toggleZoom}
+              />
+          </div>
+          
+          <div className="absolute bottom-3 right-3 opacity-0 max-sm:opacity-100 group-hover:opacity-100 transition-all duration-200 flex gap-2">
+              <Button
+                  onClick={toggleZoom}
+                  size="sm"
+                  variant="outline"
+                  className="backdrop-blur-sm"
+              >
+                  {isZoomed ? <ZoomOut size={14} /> : <ZoomIn size={14} />}
+              </Button>
+              <Button
+                  onClick={handleDownload}
+                  size="sm"
+                  variant="outline"
+                  className="backdrop-blur-sm"
+              >
+                  <Download size={14} />
+                  <span className="text-xs font-medium">Download</span>
+              </Button>
+          </div>
+      </div>
+  )
+
+  return (
+      <div className="relative group w-full overflow-hidden">
+              {imageContent}            
+      </div>
+  )
+}
+
 export function SVGPreview(props: { xmlCode: string; className?: string; generating?: boolean, mermaidCode?: string }) {
   const { xmlCode, className, generating, mermaidCode } = props
   const { setPictureShow } = usePictureShow()
@@ -310,92 +409,15 @@ export function SVGPreview(props: { xmlCode: string; className?: string; generat
   }
   
   return (
-    <Card
-      className={cn('cursor-pointer size-full group relative', className)}
-      onClick={async () => {
-        try {
-          const pngBase64 = await convertSvgToPng(xmlCode, {
-            scale: 3,
-            quality: 1.0
-          });
-          setPictureShow({
-            picture: { url: pngBase64 },
-          });
-        } catch (error) {
-          console.error('Failed to convert SVG to PNG:', error);
-          toast('Failed to convert image');
-        }
-      }}
-    >
-        <Image
+        <ImageDisplay
+        prompt=''
           src={svgBase64}
-          className="object-cover size-full rounded-md"
-          width={100}
-          height={100}
-          aspectRatio="auto"
         />
-        
-        <div className="absolute flex items-center gap-2 z-10 bottom-2 right-2  opacity-0 group-hover:opacity-100 transition-opacity max-sm:opacity-100">
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-background/80 backdrop-blur-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              const handleZoom = async () => {
-                try {
-                  const pngBase64 = await convertSvgToPng(xmlCode, {
-                    scale: 3,
-                    quality: 1.0
-                  });
-                  setPictureShow({
-                    picture: { url: pngBase64 },
-                  });
-                } catch (error) {
-                  console.error('Failed to convert SVG to PNG:', error);
-                  toast('Failed to convert image');
-                }
-              };
-              handleZoom();
-            }}
-          >
-            <ZoomIn size={14} />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-background/80 backdrop-blur-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              copyToClipboard(mermaidCode as string);
-              toast('copied to clipboard');
-            }}
-          >
-            <Copy size={14} />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-background/80 backdrop-blur-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              const handleDownload = async () => {
-                try {
-                  handleDownloadBase(svgBase64, '');
-                } catch (error) {
-                  console.error('Failed to download image:', error);
-                  toast('Failed to download image');
-                }
-              };
-              handleDownload();
-            }}
-          >
-            <Download size={14}/>
-          </Button>
-        </div>
-    </Card>
   )
 }
+
+
+
 
 async function mermaidCodeToSvgCode(source: string, theme: 'default' | 'forest' | 'dark' | 'neutral' | 'null') {
   try {

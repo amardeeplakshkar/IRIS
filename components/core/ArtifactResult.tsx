@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useArtifact } from '@/components/provider/ArtifactProvider'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartArea, Code, Eye, FileText, Image } from 'lucide-react'
+import { ProgressiveBlur } from '../ui/progressive-blur'
 
 interface ArtifactResultProps {
   result: {
@@ -26,7 +27,7 @@ const ArtifactResult: React.FC<ArtifactResultProps> = ({ result }) => {
 
   if (!result?.success || !result?.artifact) {
     return (
-      <Card className="w-full max-w-md mx-auto bg-red-950/20 border-red-800/50">
+      <Card className="w-full max-w-[80dvw] mx-auto bg-red-950/20 border-red-800/50">
         <CardHeader>
           <CardTitle className="text-red-400">Artifact Creation Failed</CardTitle>
         </CardHeader>
@@ -75,11 +76,14 @@ const ArtifactResult: React.FC<ArtifactResultProps> = ({ result }) => {
               />
             </div>
           ) : artifact.type === 'code' ? (
-            <pre className="p-2 bg-muted rounded-md overflow-hidden text-xs max-h-24">
+            <pre className="relative p-2 bg-muted rounded-md overflow-hidden text-xs max-h-24">
               <code>{artifact.content.substring(0, 200)}...</code>
+              <ProgressiveBlur height="45%" position='bottom'/>
             </pre>
           ) : (
+            <>
             <p className="line-clamp-3">{artifact.content.substring(0, 200)}...</p>
+            </>
           )}
         </div>
       </CardContent>

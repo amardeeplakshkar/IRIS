@@ -14,16 +14,29 @@ export const ImageTool = tool({
             .max(4)
             .default(1)
             .describe('Number of images to generate (1–4)'),
-        size: z
-            .enum(['256x256', '512x512', '1024x1024'])
-            .default('512x512')
-            .describe('Size of the generated image'),
+        ratio: z
+            .enum(['16:9', '1:1', '4:3', '9:16', '3:4', '5:3', '3:5'])
+            .default('1:1')
+            .describe('Ratio of the generated image'),
         imageLink: z
             .string()
             .describe('Link to the image to be used as a reference'),
     }),
-    execute: async ({ prompt, n, size, imageLink }) => {
-        const [width, height] = size.split('x').map(Number);
+    execute: async ({ prompt, n, ratio, imageLink }) => {
+        const maxSize = 1024;
+
+        const [wRatio, hRatio] = ratio.split(':').map(Number);
+    
+        let width, height;
+    
+        if (wRatio >= hRatio) {
+            width = maxSize;
+            height = Math.round((maxSize * hRatio) / wRatio);
+        } else {
+            height = maxSize;
+            width = Math.round((maxSize * wRatio) / hRatio);
+        }
+    
         const imageUrls = [];
 
         for (let i = 0; i < n; i++) {

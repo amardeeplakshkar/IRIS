@@ -19,10 +19,7 @@ const ChatAudio = ({ msg }: { msg: string }) => {
 
 
     const splitIntoParagraphs = (text: string): string[] => {
-        return text
-            .split('\n\n')
-            .map(paragraph => paragraph.trim())
-            .filter(paragraph => paragraph.length > 0);
+        return text?.split('\n\n')?.map(paragraph => paragraph.trim())?.filter(paragraph => paragraph.length > 0);
     };
 
 
@@ -48,7 +45,7 @@ const ChatAudio = ({ msg }: { msg: string }) => {
         setMergedAudioUrl(null);
 
         try {
-            const paragraphs = splitIntoParagraphs(msg);
+            const paragraphs = splitIntoParagraphs(msg || '');
             const audioPromises = paragraphs.map(paragraph => generateTTSForParagraph(paragraph));
             const audioResults = await Promise.all(audioPromises);
 

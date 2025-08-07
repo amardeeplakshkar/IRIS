@@ -98,12 +98,36 @@ const ChatMessage = ({
                             {msg.parts?.map((part, i) => {
                                 switch (part.type) {
                                     case 'text':
-                                            return (
-                                            <div key={i}>
+                                        return (
+                                            <div id={msg.id} key={i}>
                                                 {
                                                     msg.id !== messages[messages.length - 1].id ? (
                                                         <div className={isUser ? "flex-row-reverse bg-secondary-foreground/10 dark:bg-secondary/10 p-2 px-3 rounded-xl border border-secondary-foreground/10 dark:border-secondary/10" : ""}>
                                                             <MemoizedMarkdown content={part.text} id={msg.id} />
+                                                            {
+                                !isLoading && !error && !isUser &&
+                                <div className='flex items-center gap-2 mt-2'>
+                                    <TooltipBox content="Copy Message">
+                                        <Button
+                                            size={'sm'}
+                                            variant={'outline'}
+                                            onClick={() => copyToClipboard(part.text)}
+                                        >
+                                            <Copy className='h-4 w-4' />
+                                        </Button>
+                                    </TooltipBox>
+                                    <ChatAudio msg={part.text} />
+                                    <TooltipBox content="Reload Message">
+                                        {isLastMessage && <Button
+                                            size={'sm'}
+                                            variant={'outline'}
+                                            onClick={() => reload()}
+                                        >
+                                            <RefreshCcw className='h-4 w-4' />
+                                        </Button>}
+                                    </TooltipBox>
+                                </div>
+                            }
                                                         </div>
                                                     ) : (
                                                         <div className={`flex text-wrap break-words flex-col justify-start  transition-opacity duration-300 opacity-100 min-h-[calc(10vh-18rem)]`}>
@@ -112,6 +136,30 @@ const ChatMessage = ({
                                                                 {isLoading && !isToolCalling && !isUser && isLastMessage && (
                                                                     <MessageLoading />
                                                                 )}
+                                                                 {
+                                !isLoading && !error && !isUser &&
+                                <div className='flex items-center gap-2 mt-2'>
+                                    <TooltipBox content="Copy Message">
+                                        <Button
+                                            size={'sm'}
+                                            variant={'outline'}
+                                            onClick={() => copyToClipboard(part.text)}
+                                        >
+                                            <Copy className='h-4 w-4' />
+                                        </Button>
+                                    </TooltipBox>
+                                    <ChatAudio msg={part.text} />
+                                    <TooltipBox content="Reload Message">
+                                        {isLastMessage && <Button
+                                            size={'sm'}
+                                            variant={'outline'}
+                                            onClick={() => reload()}
+                                        >
+                                            <RefreshCcw className='h-4 w-4' />
+                                        </Button>}
+                                    </TooltipBox>
+                                </div>
+                            }
                                                             </div>
                                                         </div>
                                                     )
@@ -120,7 +168,7 @@ const ChatMessage = ({
                                         )
                                     case 'reasoning':
                                         return (
-                                            <div key={i}>
+                                            <div id={msg.id} key={i}>
                                                 {
                                                     msg.id !== messages[messages.length - 1].id ? (
                                                         <MessageReasoning
@@ -144,7 +192,7 @@ const ChatMessage = ({
                                         );
                                     case 'tool-invocation': {
                                         return (
-                                            <div key={part.toolInvocation.toolCallId}>
+                                            <div id={msg.id} key={part.toolInvocation.toolCallId}>
                                                 <ToolResult
                                                     isLoading={isLoading}
                                                     toolInvocation={part.toolInvocation}
@@ -155,30 +203,6 @@ const ChatMessage = ({
                                     }
                                 }
                             })}
-                            {
-                                !isLoading && !error && !isUser &&
-                                <div className='flex items-center gap-2 mt-2'>
-                                    <TooltipBox content="Copy Message">
-                                    <Button
-                                        size={'sm'}
-                                        variant={'outline'}
-                                        onClick={() => copyToClipboard(msg.content)}
-                                        >
-                                        <Copy className='h-4 w-4' />
-                                    </Button>
-                                        </TooltipBox>
-                                    <ChatAudio msg={msg.content}/>
-                                    <TooltipBox content="Reload Message">
-                                    {isLastMessage && <Button
-                                        size={'sm'}
-                                        variant={'outline'}
-                                        onClick={() => reload()}
-                                    >
-                                        <RefreshCcw className='h-4 w-4' />
-                                    </Button>}
-                                    </TooltipBox>
-                                </div>
-                            }
                         </div>
                     </div>
                 </div>
@@ -193,37 +217,17 @@ export const ThinkingMessage = () => {
     const role = 'assistant';
 
     return (
-        <motion.div
-            data-testid="message-assistant-loading"
-            className="w-full mx-auto max-w-3xl px-4 group/message min-h-96"
-            initial={{ y: 5, opacity: 0 }}
-            animate={{ y: 0, opacity: 1, transition: { delay: 1 } }}
-            data-role={role}
-        >
-            <div
-                className={cx(
-                    'flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl',
-                    {
-                        'group-data-[role=user]/message:bg-muted': true,
-                    },
-                )}
+        <div className='max-w-5xl mx-auto p-2'>
+            <TextShimmerWave
+                className='[--base-color:#0D74CE] [--base-gradient-color:#5EB1EF]'
+                duration={1}
+                spread={1}
+                zDistance={1}
+                scaleDistance={1.1}
+                rotateYDistance={20}
             >
-
-                <div className="flex flex-col gap-2 w-full">
-                    <div className="flex flex-col gap-4 text-muted-foreground">
-                        <TextShimmerWave
-                            className='[--base-color:#0D74CE] [--base-gradient-color:#5EB1EF]'
-                            duration={1}
-                            spread={1}
-                            zDistance={1}
-                            scaleDistance={1.1}
-                            rotateYDistance={20}
-                        >
-                            Thinking...
-                        </TextShimmerWave>
-                    </div>
-                </div>
-            </div>
-        </motion.div>
+                Thinking...
+            </TextShimmerWave>
+        </div>
     );
 };

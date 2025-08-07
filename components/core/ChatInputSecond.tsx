@@ -231,17 +231,17 @@ const toolsList = [
     placeholder: 'Think for longer',
     model: "chat-model-reasoning"
   },
-  {
-    id: 'deepResearch',
-    name: 'Run deep research',
-    shortName: 'Deep Research',
-    icon: Telescope,
-    borderColor: 'border-violet-500',
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-500/20',
-    placeholder: 'Run deep research',
-    model: 'chat-model-deepresearch'
-  },
+  // {
+  //   id: 'deepResearch',
+  //   name: 'Run deep research',
+  //   shortName: 'Deep Research',
+  //   icon: Telescope,
+  //   borderColor: 'border-violet-500',
+  //   color: 'text-violet-500',
+  //   bgColor: 'bg-violet-500/20',
+  //   placeholder: 'Run deep research',
+  //   model: 'chat-model-deepresearch'
+  // },
 ];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
@@ -507,7 +507,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl max-w-4xl mx-auto bg-background"
+      className="relative w-full overflow-hidden rounded-xl max-w-5xl mx-auto bg-background"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}

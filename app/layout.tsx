@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import RootProvider from "@/components/provider/RootProvider";
 import Head from "next/head";
+import { TRPCReactProvider } from "@/lib/trpc/client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,6 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <TRPCReactProvider>
     <html lang="en" suppressHydrationWarning>
       <Head>
         <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png" />
@@ -95,5 +97,6 @@ export default function RootLayout({
         </RootProvider>
       </body>
     </html>
+    </TRPCReactProvider>
   );
 }

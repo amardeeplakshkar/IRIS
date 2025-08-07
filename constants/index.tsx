@@ -149,7 +149,7 @@ export const components = {
   },
   table({ node, className, children, ...props }: any) {
     return (
-      <div className="my-4 w-full overflow-x-auto">
+      <div className="my-4 max-w-[80dvw] overflow-x-auto">
         <Table className="rounded overflow-hidden" {...props}>
           {children}
         </Table>

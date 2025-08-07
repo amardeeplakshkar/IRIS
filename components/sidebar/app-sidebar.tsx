@@ -5,13 +5,19 @@ import {
   BookOpen,
   Bot,
   Command,
+  Folder,
   Frame,
+  Image,
   LifeBuoy,
   Map,
+  MessageSquareIcon,
+  MoreHorizontal,
   PieChart,
   Send,
   Settings2,
+  Share,
   SquareTerminal,
+  Trash2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -24,135 +30,89 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-
-const data = {
-  user: {
-    name: "Amardeep Lakshkar",
-    email: "amardeep.devs@gmail.com",
-    avatar: "https://avatar.vercel.sh/amardeeplakshkar",
-  },
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-}
+import { useUser } from "@clerk/nextjs"
+import { useTRPC } from "@/lib/trpc/client"
+import { useQuery } from "@tanstack/react-query"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useUser()
+  const data = {
+    user: {
+      name: user?.fullName || "User",
+      email: user?.emailAddresses[0].emailAddress || "user@amardeep.space",
+      avatar: user?.imageUrl || "",
+    },
+    navMain: [
+      {
+        title: "New Chat",
+        url: "/",
+        icon: MessageSquareIcon,
+      },
+      {
+        title: "Library",
+        url: "/library",
+        icon: Image,
+      },
+      // {
+      //   title: "Documentation",
+      //   url: "#",
+      //   icon: BookOpen,
+      //   items: [
+      //     {
+      //       title: "Introduction",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Get Started",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Tutorials",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Changelog",
+      //       url: "#",
+      //     },
+      //   ],
+      // },
+      // {
+      //   title: "Settings",
+      //   url: "#",
+      //   icon: Settings2,
+      //   items: [
+      //     {
+      //       title: "General",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Team",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Billing",
+      //       url: "#",
+      //     },
+      //     {
+      //       title: "Limits",
+      //       url: "#",
+      //     },
+      //   ],
+      // },
+    ],
+    navSecondary: [
+      {
+        title: "Support & Feedback",
+        url: "https://github.com/amardeeplakshkar/IRIS/issues/new",
+        icon: Send,
+      },
+    ],   
+  }
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -174,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavProjects/>
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

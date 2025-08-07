@@ -24,28 +24,29 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useTRPC } from "@/lib/trpc/client"
+import { useQuery } from "@tanstack/react-query"
+import { useUser } from "@clerk/nextjs"
+import { usePathname } from "next/navigation"
+import { cn } from "@/lib/utils"
 
-export function NavProjects({
-  projects,
-}: {
-  projects: {
-    name: string
-    url: string
-    icon: LucideIcon
-  }[]
-}) {
+export function NavProjects() {
+  const pathname = usePathname()
   const { isMobile } = useSidebar()
-
+  const { user } = useUser()
+  const trpc = useTRPC();
+  const { data: chats } = useQuery(trpc.chat.getMany.queryOptions());
+  if (!user) return null;
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Chats</SidebarGroupLabel>
       <SidebarMenu>
-        {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
+        {chats?.map((item) => (
+          <SidebarMenuItem key={item.id}>
+            <SidebarMenuButton className={cn("", pathname === `/chat/${item.id}` && "bg-sidebar-accent text-sidebar-accent-foreground")} asChild>
+              <a href={`/chat/${item.id}`}>
+                <Folder />
+                <span>{item?.messages[0]?.content}</span>
               </a>
             </SidebarMenuButton>
             <DropdownMenu>
@@ -77,12 +78,6 @@ export function NavProjects({
             </DropdownMenu>
           </SidebarMenuItem>
         ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton>
-            <MoreHorizontal />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroup>
   )
