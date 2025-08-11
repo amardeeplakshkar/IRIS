@@ -3,6 +3,7 @@ import { ComponentPropsWithoutRef, ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import BlurVignette from "../ui/blur-vignette";
 
 interface BentoGridProps extends ComponentPropsWithoutRef<"div"> {
   children: ReactNode;
@@ -58,17 +59,16 @@ const BentoCard = ({
     {...props}
   >
     <div className="">{background}</div>
-    <div className="p-4 bg-gradient-to-t from-white/20 to-transparent">
+    <div className="p-4 bg-gradient-to-t from-background via-background/80 to-transparent">
       <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 transition-all duration-300 lg:group-hover:-translate-y-10">
         <Icon className={cn("h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75", color)} />
         <h3 className={cn("text-xl font-semibold text-neutral-300", color)}>
           {name}
         </h3>
-        <p className={cn("max-w-lg text-neutral-400", subColor)}>{description}</p>
+        <p className={cn("max-w-lg text-muted-foreground", )}>{description}</p>
       </div>
 
     </div>
-
     <div className="pointer-events-none absolute inset-0 transform-gpu transition-all duration-300 group-hover:bg-black/[.03] group-hover:dark:bg-neutral-800/10" />
   </div>
 );

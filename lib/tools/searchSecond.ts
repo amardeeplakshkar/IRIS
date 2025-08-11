@@ -1,5 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
+import { searchPrompt } from '../ai/prompts';
 
 export const webSearchTool = tool({
     description: 'Use this tool when the user asks about recent events, current data, or anything the AI may not have reliable knowledge of. It performs a real-time web search using SearchGPT and returns a summarized answer in JSON format.',
@@ -20,7 +21,7 @@ export const webSearchTool = tool({
                   model: 'sonar',
                   return_images: true,
                   messages: [
-                    { role: 'system', content: 'Be precise and concise.' },
+                    { role: 'system', content: searchPrompt },
                     { role: 'user', content: query },
                   ],
                   temperature: 0.2,

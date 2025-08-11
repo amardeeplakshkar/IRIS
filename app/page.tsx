@@ -21,7 +21,6 @@ import { HeroBentoGrid } from "@/components/magicui/HeroBentoGrid";
 const formScema = z.object({
     value: z.string()
         .min(1, { message: "Value is required" })
-
 });
 
 const ProjectForm = () => {

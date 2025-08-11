@@ -1,5 +1,5 @@
 import { cn, copyToClipboard } from '@/lib/utils';
-import { Message } from 'ai';
+import { CoreMessage, Message } from 'ai';
 import React, { useState } from 'react'
 import { MemoizedMarkdown } from './MemoizedMarkdown';
 import { MessageReasoning } from './MessageReasoning';
@@ -15,6 +15,8 @@ import { motion } from 'framer-motion';
 import { TextShimmerWave } from '../ui/text-shimmer-wave';
 import ChatAudio from './ChatAudio';
 import TooltipBox from '../helpers/TooltipBox';
+import RelatedQuestions from '../ui/related-questions';
+import { generateRelatedQuestions } from '@/lib/generateReletedQuestions';
 
 const ChatMessage = ({
     msg,
@@ -24,7 +26,8 @@ const ChatMessage = ({
     isToolCalling,
     reload,
     error,
-    status
+    status,
+    onQuerySelect,
 }: {
     msg: Message;
     variant: string;
@@ -34,9 +37,39 @@ const ChatMessage = ({
     isLoading: boolean;
     isToolCalling: boolean;
     reload: () => void;
-    status: string
+    status: string;
+    onQuerySelect: (query: string) => void;
 }) => {
     const isLastMessage = msg.id === messages[messages.length - 1].id;
+    const [relatedQuestions, setRelatedQuestions] = React.useState<any>([]);
+    const [hasFetched, setHasFetched] = React.useState(false);
+    
+    const fetchReletedQuestions = React.useCallback(async () => {
+      const response = await generateRelatedQuestions(messages as CoreMessage[]);
+      setRelatedQuestions(response);
+      setHasFetched(true);
+    }, [messages]);
+    
+    React.useEffect(() => {
+      const lastMessage = messages[messages.length - 1];
+      
+      if (
+        lastMessage?.role === 'assistant' &&
+        status !== 'streaming' &&
+        !hasFetched
+      ) {
+        fetchReletedQuestions();
+      }
+    }, [messages, hasFetched, fetchReletedQuestions]);
+    
+    React.useEffect(() => {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant') {
+        setHasFetched(false);
+        setRelatedQuestions([]);
+      }
+    }, [messages[messages.length - 1]?.id]);
+    
     const [mode, setMode] = useState("view");
     return (
         <div className={cn(
@@ -105,29 +138,29 @@ const ChatMessage = ({
                                                         <div className={isUser ? "flex-row-reverse bg-secondary-foreground/10 dark:bg-secondary/10 p-2 px-3 rounded-xl border border-secondary-foreground/10 dark:border-secondary/10" : ""}>
                                                             <MemoizedMarkdown content={part.text} id={msg.id} />
                                                             {
-                                !isLoading && !error && !isUser &&
-                                <div className='flex items-center gap-2 mt-2'>
-                                    <TooltipBox content="Copy Message">
-                                        <Button
-                                            size={'sm'}
-                                            variant={'outline'}
-                                            onClick={() => copyToClipboard(part.text)}
-                                        >
-                                            <Copy className='h-4 w-4' />
-                                        </Button>
-                                    </TooltipBox>
-                                    <ChatAudio msg={part.text} />
-                                    <TooltipBox content="Reload Message">
-                                        {isLastMessage && <Button
-                                            size={'sm'}
-                                            variant={'outline'}
-                                            onClick={() => reload()}
-                                        >
-                                            <RefreshCcw className='h-4 w-4' />
-                                        </Button>}
-                                    </TooltipBox>
-                                </div>
-                            }
+                                                                !isLoading && !error && !isUser &&
+                                                                <div className='flex items-center gap-2 mt-2'>
+                                                                    <TooltipBox content="Copy Message">
+                                                                        <Button
+                                                                            size={'sm'}
+                                                                            variant={'outline'}
+                                                                            onClick={() => copyToClipboard(part.text)}
+                                                                        >
+                                                                            <Copy className='h-4 w-4' />
+                                                                        </Button>
+                                                                    </TooltipBox>
+                                                                    <ChatAudio msg={part.text} />
+                                                                    <TooltipBox content="Reload Message">
+                                                                        {isLastMessage && <Button
+                                                                            size={'sm'}
+                                                                            variant={'outline'}
+                                                                            onClick={() => reload()}
+                                                                        >
+                                                                            <RefreshCcw className='h-4 w-4' />
+                                                                        </Button>}
+                                                                    </TooltipBox>
+                                                                </div>
+                                                            }
                                                         </div>
                                                     ) : (
                                                         <div className={`flex text-wrap break-words flex-col justify-start  transition-opacity duration-300 opacity-100 min-h-[calc(10vh-18rem)]`}>
@@ -136,30 +169,36 @@ const ChatMessage = ({
                                                                 {isLoading && !isToolCalling && !isUser && isLastMessage && (
                                                                     <MessageLoading />
                                                                 )}
-                                                                 {
-                                !isLoading && !error && !isUser &&
-                                <div className='flex items-center gap-2 mt-2'>
-                                    <TooltipBox content="Copy Message">
-                                        <Button
-                                            size={'sm'}
-                                            variant={'outline'}
-                                            onClick={() => copyToClipboard(part.text)}
-                                        >
-                                            <Copy className='h-4 w-4' />
-                                        </Button>
-                                    </TooltipBox>
-                                    <ChatAudio msg={part.text} />
-                                    <TooltipBox content="Reload Message">
-                                        {isLastMessage && <Button
-                                            size={'sm'}
-                                            variant={'outline'}
-                                            onClick={() => reload()}
-                                        >
-                                            <RefreshCcw className='h-4 w-4' />
-                                        </Button>}
-                                    </TooltipBox>
-                                </div>
-                            }
+                                                                {
+                                                                    !isLoading && !error && !isUser &&
+                                                                    <>
+                                                                        <div className='flex items-center gap-2 mt-2'>
+                                                                            <TooltipBox content="Copy Message">
+                                                                                <Button
+                                                                                    size={'sm'}
+                                                                                    variant={'outline'}
+                                                                                    onClick={() => copyToClipboard(part.text)}
+                                                                                >
+                                                                                    <Copy className='h-4 w-4' />
+                                                                                </Button>
+                                                                            </TooltipBox>
+                                                                            <ChatAudio msg={part.text} />
+                                                                            <TooltipBox content="Reload Message">
+                                                                                {isLastMessage && <Button
+                                                                                    size={'sm'}
+                                                                                    variant={'outline'}
+                                                                                    onClick={() => reload()}
+                                                                                >
+                                                                                    <RefreshCcw className='h-4 w-4' />
+                                                                                </Button>}
+                                                                            </TooltipBox>
+                                                                        </div>
+                                                                        <RelatedQuestions
+                                                                            items={relatedQuestions?.object?.items}
+                                                                            onQuerySelect={onQuerySelect}
+                                                                        />
+                                                                    </>
+                                                                }
                                                             </div>
                                                         </div>
                                                     )

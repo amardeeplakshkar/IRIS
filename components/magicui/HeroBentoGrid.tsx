@@ -8,6 +8,7 @@ import {
   
   import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid";
 import { Brain, Cloud, Image } from "lucide-react";
+import BlurVignette from "../ui/blur-vignette";
   
   const VideoBackground = ({ src, className }: { src: string; className?: string }) => (
   <video
@@ -29,7 +30,7 @@ const features = [
     href: "/",
     color: "text-pink-700",
     subColor: "text-pink-700/80",
-    background: <VideoBackground src="iris-image-tool.webm" className="opacity-45 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
+    background: <VideoBackground src="iris-image-tool.webm" className="opacity-55 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
     className: "lg:row-start-1 lg:row-end-4 lg:col-start-2 lg:col-end-3",
   },
   {
@@ -39,7 +40,7 @@ const features = [
     href: "/",
     color: "text-red-500",
     subColor: "text-red-700/80",
-    background: <VideoBackground src="iris-reasoing.webm" className="opacity-45 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
+    background: <VideoBackground src="iris-reasoing.webm" className="opacity-55 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
     className: "lg:col-start-3 lg:col-end-3 lg:row-start-1 lg:row-end-2",
   },
   {
@@ -49,7 +50,7 @@ const features = [
     href: "/",
     color: "text-green-700",
     subColor:"text-green-700/80",
-    background: <VideoBackground src="iris-mermaid.webm" className="opacity-45 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
+    background: <VideoBackground src="iris-mermaid.webm" className="opacity-55 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
     className: "lg:col-start-1 lg:col-end-2 lg:row-start-3 lg:row-end-4",
   },
   {
@@ -59,7 +60,7 @@ const features = [
     href: "/",
     color: "text-cyan-700",
     subColor: "text-cyan-700/80",
-    background: <VideoBackground src="iris-essay.webm" className="opacity-45 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
+    background: <VideoBackground src="iris-essay.webm" className="opacity-55 group-hover:scale-110 scale-105 transition-all ease-in-out" />,
     className: "lg:col-start-1 lg:col-end-2 lg:row-start-1 lg:row-end-3",
   },
   {
@@ -70,7 +71,7 @@ const features = [
     href: "/",
     color: "text-blue-700",
     subColor: "text-blue-700/80",
-    background: <VideoBackground src="iris-weather-tool.webm" className="group-hover:scale-110 scale-105 transition-all ease-in-out opacity-45" />,
+    background: <VideoBackground src="iris-weather-tool.webm" className="group-hover:scale-110 scale-105 transition-all ease-in-out opacity-55" />,
     className: "lg:col-start-3 lg:col-end-3 lg:row-start-2 lg:row-end-4",
   },
 ];

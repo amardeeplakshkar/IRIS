@@ -89,6 +89,13 @@ const ChatView = ({chatId}: {chatId: string}) => {
     }
   }, [isLoading, isToolCalling]);
   
+  const modelPrefixes: Record<string, string> = {
+    'chat-model': '',
+    'search-model': 'SEARCH',
+    'artifact-model': 'IN ARTIFACT',
+    'chat-model-reasoning': 'THINK AND REASON'
+  };
+
   const handleSendMessage = async (
     chatchatMessages: string,
     files: FileWithPreview[],
@@ -134,44 +141,46 @@ const ChatView = ({chatId}: {chatId: string}) => {
 
     await append({
       role: 'user',
-      content: fullMessage,
+      content: `${modelPrefixes[selectedChatModel]}\n${fullMessage}`,
       experimental_attachments: attachments
     });
   };
 
-  const scrollToMessage = () => {
+
+
+  const scrollToMessage = (scrollToBottom = false) => {
     if (chatMessages.length === 0) return;
     const lastMessage = chatMessages[chatMessages.length - 1];
-
-    // Use setTimeout to ensure DOM has fully updated and rendered
+  
     setTimeout(() => {
       if (!chatViewportRef.current) return;
-      
-      // Find the message element by its ID
-      const messageElement = document.getElementById(lastMessage.id);
-      
-      if (messageElement) {
-        // Get the position of the message element relative to the document
-        const messageRect = messageElement.getBoundingClientRect();
-        const viewportRect = chatViewportRef.current.getBoundingClientRect();
-        
-        // Calculate how much to scroll to position the message at the top of the viewport
-        // with a small padding (10px)
-        const scrollTop = chatViewportRef.current.scrollTop + (messageRect.top - viewportRect.top) - 10;
-        
-        // Scroll the viewport to position the message at the top
-        chatViewportRef.current.scrollTo({
-          top: scrollTop,
-          behavior: 'smooth'
-        });
-      } else {
-        // Fallback: if we can't find the message element, scroll to the bottom
+  
+      if (scrollToBottom) {
+        // Scroll to bottom
         chatViewportRef.current.scrollTo({
           top: chatViewportRef.current.scrollHeight,
           behavior: 'smooth'
         });
+      } else {
+        // Scroll to message (same as your existing code)
+        const messageElement = document.getElementById(lastMessage.id);
+        if (messageElement) {
+          const messageRect = messageElement.getBoundingClientRect();
+          const viewportRect = chatViewportRef.current.getBoundingClientRect();
+          const scrollTop = chatViewportRef.current.scrollTop + (messageRect.top - viewportRect.top) - 10;
+  
+          chatViewportRef.current.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        } else {
+          chatViewportRef.current.scrollTo({
+            top: chatViewportRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
       }
-    }, 100); // Small delay to ensure content is rendered
+    }, 50);
   };
 
   const isWaitingForResponse = useMemo(() => {
@@ -181,8 +190,19 @@ const ChatView = ({chatId}: {chatId: string}) => {
 
   
   useEffect(() => {
-    scrollToMessage();
+    if (chatMessages.length === 0) return;
+  
+    const lastMsg = chatMessages[chatMessages.length - 1];
+  
+    if (lastMsg.role === 'assistant') {
+      // When last message is assistant, scroll to bottom
+      scrollToMessage(true);
+    } else {
+      // For user messages, scroll to top
+      scrollToMessage(false);
+    }
   }, [chatMessages]);
+
 
   useEffect(()=>{
 // Scroll to bottom only when the message is an AI response
@@ -206,6 +226,13 @@ const ChatView = ({chatId}: {chatId: string}) => {
     }
   };
 
+  const onQuerySelect = (query: string) => {
+    append({
+      role: 'user',
+      content: query
+    })
+  }
+
   const shouldSkipFirstMessage =
   messages?.[0]?.role === 'user' && chatMessages.length > 1;
 
@@ -226,7 +253,7 @@ const ChatView = ({chatId}: {chatId: string}) => {
               ref={m.role === 'user' ? (el) => setUserMessageRef(el, m.id) : undefined}
               className={`mb-4 ${m.role === 'user' ? 'mt-4' : ''}`}
             >
-              <ChatMessage status={status} reload={reload} key={m.id} isToolCalling={isToolCalling} isLoading={isLoading} error={isError} msg={m} variant={m.role === 'user' ? 'sent' : 'received'} isUser={m.role === 'user'} messages={displayMessages} />
+              <ChatMessage onQuerySelect={onQuerySelect} status={status} reload={reload} key={m.id} isToolCalling={isToolCalling} isLoading={isLoading} error={isError} msg={m} variant={m.role === 'user' ? 'sent' : 'received'} isUser={m.role === 'user'} messages={displayMessages} />
               <br />
             </div>
           ))}
@@ -257,7 +284,7 @@ const ChatView = ({chatId}: {chatId: string}) => {
               </Button>
           </div>
         }
-        {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className="h-[40dvh]" />}
+        {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className={`${isLoading ? `h-[${isMobile ? '20' : '40'}dvh]` : ''}`} />}
 
       </ScrollArea>
       <div className='absolute bottom-0 z-49 left-0 right-0  p-2 '>

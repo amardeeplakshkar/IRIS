@@ -39,7 +39,6 @@ export const chatRouter = createTRPCRouter({
      .input(
         z.object({
             value : z.string().min(1,{message: "Value is required"})
-            .max(1000,{message : "Value is too  long"}),
         })
      )
      .mutation(async ({input, ctx})=>{
