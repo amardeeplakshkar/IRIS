@@ -11,14 +11,14 @@ import { Skeleton } from './skeleton'
 export interface RelatedQuestionsProps {
   items: {query: string}[]
   onQuerySelect: (query: string) => void
+  isLoading?: boolean
 }
 
 export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   items,
   onQuerySelect,
+  isLoading = false
 }) => {
-  const isLoading = status === 'submitted' || status === 'streaming'
-
   if (!items) {
     return null
   }
@@ -26,8 +26,8 @@ export const RelatedQuestions: React.FC<RelatedQuestionsProps> = ({
   if (items.length === 0 && isLoading) {
     return (
         <Skeleton className="w-full h-6" />
-    )
-  }
+    )                         
+  }                         
 
   return (
     <div>

@@ -196,6 +196,7 @@ const ChatMessage = ({
                                                                         <RelatedQuestions
                                                                             items={relatedQuestions?.object?.items}
                                                                             onQuerySelect={onQuerySelect}
+                                                                            isLoading={isLoading}
                                                                         />
                                                                     </>
                                                                 }
