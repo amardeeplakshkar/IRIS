@@ -17,6 +17,7 @@ import { useClerk } from "@clerk/nextjs";
 import { useMessages } from "@/components/provider/MessagesPorvider";
 import { Globe } from "@/components/magicui/globe";
 import { HeroBentoGrid } from "@/components/magicui/HeroBentoGrid";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const formScema = z.object({
     value: z.string()
@@ -82,7 +83,8 @@ const ProjectForm = () => {
 
 
     return (
-        <div className="h-[90dvh] p-4 flex flex-col gap-4 overflow-y-auto relative">
+        <ScrollArea className="h-[90dvh]">
+        <div className="mx-auto max-w-5xl p-4 flex flex-col gap-4 relative">
             <span className="pointer-events-none whitespace-pre-wrap bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-8xl font-semibold leading-none text-transparent dark:from-white dark:to-slate-900/10">
                 IRIS
             </span>
@@ -112,7 +114,7 @@ const ProjectForm = () => {
                                 className="pt-4 resize-none border-none w-full outline-none bg-transparent"
                                 placeholder="what would you like to build?"
                                 onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
+                                    if (e.key === "Enter" && !e.shiftKey) {
                                         e.preventDefault();
                                         form.handleSubmit(onSubmit)(e);
                                     }
@@ -160,6 +162,7 @@ const ProjectForm = () => {
             </Form>
             <HeroBentoGrid />
         </div>
+        </ScrollArea>
     )
 }
 export default ProjectForm 

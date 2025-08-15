@@ -2,22 +2,9 @@
 
 import * as React from "react"
 import {
-  BookOpen,
-  Bot,
-  Command,
-  Folder,
-  Frame,
   Image,
-  LifeBuoy,
-  Map,
   MessageSquareIcon,
-  MoreHorizontal,
-  PieChart,
   Send,
-  Settings2,
-  Share,
-  SquareTerminal,
-  Trash2,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -30,14 +17,11 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useUser } from "@clerk/nextjs"
-import { useTRPC } from "@/lib/trpc/client"
-import { useQuery } from "@tanstack/react-query"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { SignedIn, SignedOut, SignInButton, SignUpButton, useUser } from "@clerk/nextjs"
+import { Button } from "../ui/button"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser()
@@ -138,7 +122,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
+        <SignedIn>
         <NavUser user={data.user} />
+        </SignedIn>
+        <SignedOut>
+          <Button asChild variant={'secondary'}>
+          <SignUpButton/>
+          </Button>
+          <Button asChild variant={"outline"}>
+          <SignInButton/>
+          </Button>
+        </SignedOut>
       </SidebarFooter>
     </Sidebar>
   )

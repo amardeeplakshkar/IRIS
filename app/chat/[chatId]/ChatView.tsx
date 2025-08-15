@@ -284,7 +284,7 @@ const ChatView = ({chatId}: {chatId: string}) => {
               </Button>
           </div>
         }
-        {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className={`${isLoading ? `h-[${isMobile ? '20' : '40'}dvh]` : ''}`} />}
+        {isWaitingForResponse ? <div className="h-[60dvh]" /> : <div className={`${isLoading ? `h-[${isMobile ? '20' : '40'}dvh]` : '10dvh'}`} />}
 
       </ScrollArea>
       <div className='absolute bottom-0 z-49 left-0 right-0  p-2 '>

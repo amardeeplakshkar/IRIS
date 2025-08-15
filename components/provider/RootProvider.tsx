@@ -7,32 +7,33 @@ import { Toaster } from '../ui/sonner'
 import ArtifactProvider from './ArtifactProvider'
 import { ClerkProvider } from '@clerk/nextjs'
 import { MessagesProvider } from './MessagesPorvider'
+import ClerkProviderWrapper from './ClerkProvider'
 
 const RootProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
-        <ClerkProvider>
         <ArtifactProvider>
             <ThemeProvider
                 attribute="class"
                 defaultTheme="dark"
                 enableSystem
             >
-                <Toaster
-                    position="top-center"
-                    duration={2500}
-                />
-                <SidebarProvider className=''>
-                    <AppSidebar />
-                    <SidebarInset>
-                        <Navbar />
-                        <MessagesProvider>
-                        {children}
-                        </MessagesProvider>
-                    </SidebarInset>
-                </SidebarProvider>
+                <ClerkProviderWrapper>
+                    <Toaster
+                        position="top-center"
+                        duration={2500}
+                    />
+                    <SidebarProvider defaultOpen={false} className=''>
+                        <AppSidebar />
+                        <SidebarInset>
+                            <Navbar />
+                            <MessagesProvider>
+                                {children}
+                            </MessagesProvider>
+                        </SidebarInset>
+                    </SidebarProvider>
+                </ClerkProviderWrapper>
             </ThemeProvider >
         </ArtifactProvider>
-        </ClerkProvider>
     )
 }
 
