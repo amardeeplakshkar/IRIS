@@ -14,7 +14,7 @@ interface BentoCardProps extends ComponentPropsWithoutRef<"div"> {
   name: string;
   className: string;
   background: ReactNode;
-  Icon: React.ElementType;
+  Icon: any;
   description: string;
   href: string;
   color?: string;
@@ -61,7 +61,7 @@ const BentoCard = ({
     <div className="">{background}</div>
     <div className="p-4 bg-gradient-to-t from-background via-background/80 to-transparent">
       <div className="pointer-events-none z-10 flex transform-gpu flex-col gap-1 transition-all duration-300 lg:group-hover:-translate-y-10">
-        <Icon className={cn("h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75", color)} />
+        <Icon className={`h-12 w-12 origin-left transform-gpu text-neutral-700 transition-all duration-300 ease-in-out group-hover:scale-75 ${color}`} />
         <h3 className={cn("text-xl font-semibold text-neutral-300", color)}>
           {name}
         </h3>
